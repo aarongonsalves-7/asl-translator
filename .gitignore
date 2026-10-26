@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# astro / vite build output
+dist/
+.astro/
+
+# vendored ML assets: fetched by `npm run assets` (they are ~48 MB, not source)
+public/models/
+public/wasm/
+
+# test + browser artifacts
+test-results/
+playwright-report/
+blob-report/
+coverage/
+
+# env
+.env
+.env.*
+!.env.example
+
+# agent-local skill symlinks (restorable from skills-lock.json)
+.claude/
+
+# hosting / editor / OS noise
+.vercel/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
