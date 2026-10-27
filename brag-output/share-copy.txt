@@ -1,0 +1,4 @@
+Built ASL Translator: fingerspell a letter, hold it, and see it become text—with every stage explained. Runs on-device, with a camera-free HELLO demo.
+https://github.com/aarongonsalves-7/asl-translator
+
+Music: Sascha Ende, ende.app (CC BY 4.0).

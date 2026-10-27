@@ -1,0 +1,5 @@
+Music: Happy Beats / Business Moves Vol. 1 by Sascha Ende (ende.app), CC BY 4.0. https://ende.app/en/standard-license
+Audio excerpt shortened, gain adjusted and fades added.
+SFX: Kenney.nl, CC0.
+App fonts: self-hosted Inter and EB Garamond from repository; licence files retained in composition/assets/fonts.
+Demo footage is synthetic, recorded from the actual app. It does not measure real-video accuracy.
