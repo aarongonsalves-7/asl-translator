@@ -1,0 +1,98 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  path: string;
+}
+
+const {
+  title,
+  description = 'A webcam ASL fingerspelling translator that runs entirely on your device. Every stage tells you what the recogniser can see and what to do next.',
+  path,
+} = Astro.props;
+
+const nav = [
+  { href: '/', label: 'Translate' },
+  { href: '/alphabet/', label: 'Alphabet' },
+  { href: '/settings/', label: 'Settings' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>
+      // Applied before first paint so a dark-mode user never sees a white flash.
+      (() => {
+        try {
+          const saved = localStorage.getItem('asl-translator.theme');
+          if (saved === 'light' || saved === 'dark') {
+            document.documentElement.dataset.theme = saved;
+          }
+        } catch {
+          /* storage disabled */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="Main">
+      <a class="nav-brand" href="/">ASL Translator</a>
+      <div class="nav-links">
+        {
+          nav.map((item) => (
+            <a class="nav-link" href={item.href} aria-current={path === item.href ? 'page' : undefined}>
+              {item.label}
+            </a>
+          ))
+        }
+        <span class="nav-badge"><span class="dot" aria-hidden="true"></span>On-device</span>
+        <button type="button" class="theme-toggle" id="theme-toggle">Theme</button>
+      </div>
+    </nav>
+
+    <main class="page">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Runs entirely in your browser: the camera stream and every landmark stay on this device.
+        Alphabet recognition only — it is a learning and accessibility aid, not a substitute for a
+        qualified ASL interpreter.
+      </p>
+    </footer>
+
+    <script is:inline>
+      (() => {
+        const button = document.getElementById('theme-toggle');
+        if (!button) return;
+        const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+        const current = () => document.documentElement.dataset.theme ?? (systemDark() ? 'dark' : 'light');
+        const sync = () => {
+          button.textContent = current() === 'dark' ? 'Light' : 'Dark';
+          button.setAttribute('aria-label', `Switch to ${current() === 'dark' ? 'light' : 'dark'} theme`);
+        };
+        button.addEventListener('click', () => {
+          const next = current() === 'dark' ? 'light' : 'dark';
+          document.documentElement.dataset.theme = next;
+          try {
+            localStorage.setItem('asl-translator.theme', next);
+          } catch {
+            /* storage disabled */
+          }
+          sync();
+        });
+        sync();
+      })();
+    </script>
+  </body>
+</html>

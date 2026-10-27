@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import TranslateApp from '../ui/TranslateApp';
+---
+
+<Base
+  title="ASL Translator — fingerspelling from your camera"
+  description="Spell ASL letters to your webcam and read them back as text. Runs on-device, explains every stage, and needs no account."
+  path="/"
+>
+  <div class="page-head">
+    <div>
+      <h1>Spell it with your hand.</h1>
+      <p class="lede">
+        Hold an ASL letter in front of the camera and it is added to the text. Every stage tells
+        you what the recogniser can see — not just "camera on".
+      </p>
+    </div>
+  </div>
+
+  <TranslateApp client:only="react">
+    <div slot="fallback" class="card">
+      <p class="empty-note">Loading the translator…</p>
+    </div>
+  </TranslateApp>
+</Base>

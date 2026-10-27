@@ -1,0 +1,22 @@
+---
+import Base from '../layouts/Base.astro';
+import SettingsApp from '../ui/SettingsApp';
+---
+
+<Base
+  title="Settings — calibrate the ASL translator"
+  description="Tune hold time, confidence, margin, response speed and cooldown for your own hand and camera. Stored on this device only."
+  path="/settings/"
+>
+  <div class="page-head">
+    <div>
+      <h1>Calibrate it to your hand.</h1>
+      <p class="lede">
+        Defaults suit a hand about 20 cm from a laptop camera. If letters commit too early, raise
+        the hold time; if they never commit, lower the confidence or the margin.
+      </p>
+    </div>
+  </div>
+
+  <SettingsApp client:load />
+</Base>

@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import { LETTER_LIST } from '../classify/letters';
+
+// Built from the same rule table the recogniser scores against, so this page cannot drift out
+// of sync with what the app actually recognises.
+const letters = LETTER_LIST;
+---
+
+<Base
+  title="ASL alphabet — handshapes the translator recognises"
+  description="All 26 ASL fingerspelling handshapes, with how to form each one and which letters are worth checking if the translator hesitates."
+  path="/alphabet/"
+>
+  <div class="page-head">
+    <div>
+      <h1>The 26 handshapes.</h1>
+      <p class="lede">
+        Fingerspelling is a handshape per letter. These are the exact descriptions the recogniser
+        scores against, including the two letters that only exist in motion.
+      </p>
+    </div>
+  </div>
+
+  <div class="alphabet-grid">
+    {
+      letters.map((rule) => (
+        <article class="letter-card" id={`letter-${rule.letter}`}>
+          <span class="letter-glyph">{rule.letter}</span>
+          <h3>{rule.handshape}</h3>
+          <p>{rule.tip}</p>
+          {rule.motion ? <span class="letter-tag">Motion letter</span> : null}
+        </article>
+      ))
+    }
+  </div>
+
+  <section class="card" style="margin-top: var(--space-xl)">
+    <div class="card-head">
+      <span class="card-title">Reading the tricky ones</span>
+    </div>
+    <p class="setting-help">
+      A, S and E are the same closed fist at different thumb and finger tightness; O and C differ
+      by how far the fingertips curve back toward the thumb; M, N and T are separated by which
+      fingertip the thumb rests under. If the translator hesitates on one of those, the stage
+      banner names the constraint that is closest to failing — usually the thumb.
+    </p>
+  </section>
+</Base>

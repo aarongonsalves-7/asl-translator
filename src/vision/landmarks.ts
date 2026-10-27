@@ -152,18 +152,22 @@ export function canonicalize(
   // Chirality in image space: >0 for a right hand with the palm toward the camera
   // (verified by the synthetic-hand property test; see handModel tests).
   const chirality = vec.cross(vec.sub(indexMcp, wrist), vec.sub(pinkyMcp, wrist)).z;
-  const chiralitySign = frame.handedness === 'right' ? 1 : -1;
+  const handednessSign = frame.handedness === 'right' ? 1 : -1;
   const rawFacingStrength = chirality / (palmLength * palmLength);
-  const palmFacing = clamp(rawFacingStrength * chiralitySign * 4, -1, 1);
+  const palmFacing = clamp(rawFacingStrength * handednessSign * 4, -1, 1);
 
-  const mirror = frame.handedness === 'left' ? -1 : 1;
+  // No x mirroring is needed: the basis is built from the hand's own anatomy
+  // (index MCP -> pinky MCP), so the thumb always lands on -X whichever hand signs.
+  // Mirroring here as well would cancel that out and flip the thumb side.
+  // The z axis, however, does flip with handedness (mirrored basis), so normalise it.
+  const depthSign = handednessSign;
 
   const pts = imagePts.map((p) => {
     const rel = vec.sub(p, wrist);
     return {
-      x: (vec.dot(rel, xAxis) / palmLength) * mirror,
+      x: vec.dot(rel, xAxis) / palmLength,
       y: vec.dot(rel, yAxis) / palmLength,
-      z: vec.dot(rel, zAxis) / palmLength,
+      z: (vec.dot(rel, zAxis) / palmLength) * depthSign,
     };
   });
 
@@ -171,13 +175,15 @@ export function canonicalize(
 
   const rotationDeg = (Math.atan2(toMcp.x, -toMcp.y) * 180) / Math.PI;
 
+  // Motion has to be measured in image space: the palm frame is translation-invariant by
+  // design, so a hand sweeping across the frame would otherwise look perfectly still.
   let motion = 0;
   if (previous) {
     let total = 0;
-    for (let i = 0; i < pts.length; i++) {
-      total += vec.dist2d(pts[i]!, previous.pts[i]!);
+    for (let i = 0; i < imagePts.length; i++) {
+      total += vec.dist2d(imagePts[i]!, previous.imagePts[i]!);
     }
-    motion = total / pts.length;
+    motion = total / imagePts.length / palmLength;
   }
 
   const facing: PalmFacing =
