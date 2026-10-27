@@ -31,6 +31,7 @@ const nav = [
     <meta name="color-scheme" content="light dark" />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/fonts/eb-garamond-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
     <script is:inline>
       // Applied before first paint so a dark-mode user never sees a white flash.
@@ -47,7 +48,7 @@ const nav = [
     </script>
   </head>
   <body>
-    <!-- Global nav: true black, 44px, 12px links. -->
+    <!-- Top nav: 64px canvas bar, quiet menu, outline theme control. -->
     <nav class="global-nav" aria-label="Main">
       <div class="global-nav-inner">
         <a class="global-nav-brand" href="/">ASL Translator</a>
@@ -63,25 +64,14 @@ const nav = [
               </a>
             ))
           }
-          <span class="global-nav-note">
-            <span class="dot" aria-hidden="true"></span>On-device
-          </span>
+        </div>
+        <div class="global-nav-actions">
+          <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle">Theme</button>
         </div>
       </div>
     </nav>
 
-    <!-- Sub-nav: frosted parchment strip with the page name and its one action. -->
-    <div class="sub-nav">
-      <div class="sub-nav-inner">
-        <span class="sub-nav-title">{section}</span>
-        <div class="sub-nav-actions">
-          <span class="sub-nav-note">Nothing leaves this device</span>
-          <button type="button" class="pearl-capsule theme-toggle" id="theme-toggle">Theme</button>
-        </div>
-      </div>
-    </div>
-
-    <main>
+    <main data-section={section}>
       <slot />
     </main>
 

@@ -41,37 +41,36 @@ test('the translate page stacks on a phone viewport', async ({ page }) => {
   expect(side).not.toBeNull();
   // Stacked: the side column starts below the main column rather than beside it.
   expect(side!.y).toBeGreaterThan(main!.y + main!.height - 1);
-  // The sub-nav sheds its note on phone widths; the page name and theme toggle stay.
-  await expect(page.locator('.sub-nav-note')).toBeHidden();
-  await expect(page.locator('.sub-nav-title')).toBeVisible();
+  // The menu collapses on phone widths; the wordmark and the theme control stay.
+  await expect(page.locator('.global-nav-links')).toBeHidden();
+  await expect(page.locator('.global-nav-brand')).toBeVisible();
+  await expect(page.locator('#theme-toggle')).toBeVisible();
 });
 
 test('dark mode is honoured and can be overridden', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
-  // The page canvas is pure white in light mode, so dark mode lands on pure black.
+  // The light canvas is off-white (#f5f5f5); the dark canvas is the brand's near-black ink.
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe('rgb(0, 0, 0)');
+  expect(bg).toBe('rgb(12, 10, 9)');
 
   await page.getByRole('button', { name: /switch to light theme/i }).click();
   const light = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(light).toBe('rgb(255, 255, 255)');
+  expect(light).toBe('rgb(245, 245, 245)');
 });
 
-test('the shell keeps the Apple chassis: black nav, frosted sub-nav, full-bleed tiles', async ({
+test('the shell keeps the ElevenLabs chassis: canvas nav, hairline bands, editorial display', async ({
   page,
 }) => {
   await page.goto('/');
 
   const nav = page.locator('.global-nav');
   const navBox = await nav.boundingBox();
-  expect(navBox!.height).toBe(44);
-  expect(await nav.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(0, 0, 0)');
+  expect(navBox!.height).toBe(64);
+  // The nav sits on the same off-white canvas as the page, not on a black bar.
+  expect(await nav.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(245, 245, 245)');
 
-  const subNav = page.locator('.sub-nav');
-  expect((await subNav.boundingBox())!.height).toBe(52);
-  // 80px of air inside the hero tile, and no rounding on the tile itself.
-  // The React island is a custom element, so its tiles are descendants of main, not children.
+  // Bands are full-bleed (no radius, edge to edge) with editorial air inside.
   const tiles = await page.locator('main .tile').evaluateAll((nodes) =>
     nodes.map((node) => {
       const style = getComputedStyle(node);
@@ -89,11 +88,28 @@ test('the shell keeps the Apple chassis: black nav, frosted sub-nav, full-bleed 
   }
   expect(tiles[0]!.pad).toBeGreaterThanOrEqual(64);
 
-  // The hero headline is set at display scale, not at body scale.
-  const heroSize = await page.locator('.hero-display').evaluate((el) => {
+  // Display is the editorial serif at its light weight, not a bold sans headline.
+  const hero = await page.locator('.hero-display').evaluate((el) => {
     const style = getComputedStyle(el);
-    return { size: parseFloat(style.fontSize), weight: style.fontWeight, align: style.textAlign };
+    return {
+      size: parseFloat(style.fontSize),
+      weight: style.fontWeight,
+      family: style.fontFamily,
+    };
   });
-  expect(heroSize.size).toBeGreaterThanOrEqual(40);
-  expect(heroSize.weight).toBe('600');
+  expect(hero.size).toBeGreaterThanOrEqual(40);
+  expect(hero.weight).toBe('400');
+  expect(hero.family).toContain('EB Garamond');
+
+  // On a light surface the primary CTA is the near-black ink pill (#292524), never a
+  // saturated accent. (On the dark product band the same pill inverts to white for contrast.)
+  await page.goto('/settings/');
+  await waitForHydration(page);
+  await expect
+    .poll(() =>
+      page
+        .locator('.settings-actions .btn-primary')
+        .evaluate((el) => getComputedStyle(el).backgroundColor),
+    )
+    .toBe('rgb(41, 37, 36)');
 });

@@ -45,7 +45,7 @@ npm run dev       # http://localhost:4321
 npm run build      # astro check + static build to dist/
 npm run preview    # serve the build on http://127.0.0.1:4173
 npm test           # 40 unit + integration tests (vitest)
-npm run e2e        # 8 browser tests (needs `npm run e2e:install` once)
+npm run e2e        # 9 browser tests (needs `npm run e2e:install` once)
 npm run typecheck
 ```
 
@@ -72,7 +72,7 @@ demo frame ───┴─▶ FrameSource ─▶ canonicalise ─▶ features �
 | `src/pipeline/stages.ts` | Every stage's headline, explanation and the one action that moves it forward. |
 | `src/vision/sources.ts` | `LiveSource` (camera + tracker) and `DemoSource` (synthetic frames) behind one interface. |
 | `src/ui/` | Translate page, stage banner, candidates, "what I see", output + receipts, settings. |
-| `src/styles/global.css` | The design system: tokens and page architecture taken from `DESIGN.md` — 44px black nav, frosted sub-nav, full-bleed alternating tiles. Inter is self-hosted so Windows does not fall back to Segoe UI. |
+| `src/styles/global.css` | The design system: tokens and page architecture taken from `DESIGN.md` — a 64px canvas nav, off-white bands, editorial serif display, ink-pill CTAs and pastel atmospheric gradient orbs. Inter and EB Garamond are self-hosted so no third-party font request is made. |
 | `src/sim/handModel.ts` | Forward-kinematics hand model: 26 letter shapes from joint angles. Gives deterministic fixtures and powers demo mode. |
 
 Two design decisions worth knowing:
@@ -95,8 +95,8 @@ Run on 26 October 2026 on Windows with Node 22.
 - **9 Playwright tests pass** (`npm run e2e`) against the production build: demo spelling `HELLO`
   in a real browser, camera-denied narration, loading the **vendored model with a real (fake
   device) camera stream**, alphabet page, settings persistence across reload, phone-width
-  stacking, dark mode, and the shell geometry itself (44px black nav, 52px sub-nav, zero-radius
-  full-width tiles, display-scale hero).
+  stacking, dark mode, and the shell geometry itself (64px canvas nav, off-white bands,
+  editorial serif hero, ink-pill CTA).
 - **25 of 25 still letters commit** at default settings from synthetic fixtures (J and Z are
   motion, see above). This is a wiring test, not an accuracy claim: the fixtures come from our
   own forward-kinematics model.
