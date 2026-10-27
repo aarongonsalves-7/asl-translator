@@ -1,5 +1,7 @@
 # ASL Translator
 
+[▶ Watch the launch video](https://github.com/aarongonsalves-7/asl-translator/raw/refs/heads/main/brag-output/brag.mp4)
+
 Fingerspell ASL letters to your webcam and read them back as text. Everything — camera capture,
 hand tracking, classification — runs in the browser. No account, no server, no API keys.
 
