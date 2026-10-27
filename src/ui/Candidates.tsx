@@ -18,12 +18,10 @@ export function Candidates({ state }: CandidatesProps) {
   const { ranked, leader, failing, hint, motionSuggestion, config, handPresent } = state;
 
   return (
-    <section className="card" aria-label="Candidates">
-      <div className="card-head">
-        <span className="card-title">Candidates</span>
-        <span className="empty-note">
-          {leader ? `margin ${pct(leader.margin)}` : '—'}
-        </span>
+    <section className="panel" aria-label="Candidates">
+      <div className="panel-head">
+        <h3 className="panel-title">Candidates</h3>
+        <span className="panel-note">{leader ? `margin ${pct(leader.margin)}` : '—'}</span>
       </div>
 
       {ranked.length === 0 ? (

@@ -72,6 +72,7 @@ demo frame ───┴─▶ FrameSource ─▶ canonicalise ─▶ features �
 | `src/pipeline/stages.ts` | Every stage's headline, explanation and the one action that moves it forward. |
 | `src/vision/sources.ts` | `LiveSource` (camera + tracker) and `DemoSource` (synthetic frames) behind one interface. |
 | `src/ui/` | Translate page, stage banner, candidates, "what I see", output + receipts, settings. |
+| `src/styles/global.css` | The design system: tokens and page architecture taken from `DESIGN.md` — 44px black nav, frosted sub-nav, full-bleed alternating tiles. Inter is self-hosted so Windows does not fall back to Segoe UI. |
 | `src/sim/handModel.ts` | Forward-kinematics hand model: 26 letter shapes from joint angles. Gives deterministic fixtures and powers demo mode. |
 
 Two design decisions worth knowing:
@@ -91,10 +92,11 @@ Run on 26 October 2026 on Windows with Node 22.
   size, rotation and left/right hand; every static letter committing through the whole pipeline;
   smoothing, hold, cooldown, gesture safety, J/Z tracing, stage copy; settings sanitising;
   and the React page driven with a synthetic 30 fps clock.
-- **8 Playwright tests pass** (`npm run e2e`) against the production build: demo spelling `HELLO`
+- **9 Playwright tests pass** (`npm run e2e`) against the production build: demo spelling `HELLO`
   in a real browser, camera-denied narration, loading the **vendored model with a real (fake
   device) camera stream**, alphabet page, settings persistence across reload, phone-width
-  stacking, dark mode.
+  stacking, dark mode, and the shell geometry itself (44px black nav, 52px sub-nav, zero-radius
+  full-width tiles, display-scale hero).
 - **25 of 25 still letters commit** at default settings from synthetic fixtures (J and Z are
   motion, see above). This is a wiring test, not an accuracy claim: the fixtures come from our
   own forward-kinematics model.

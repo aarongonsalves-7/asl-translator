@@ -7,20 +7,24 @@ import TranslateApp from '../ui/TranslateApp';
   title="ASL Translator — fingerspelling from your camera"
   description="Spell ASL letters to your webcam and read them back as text. Runs on-device, explains every stage, and needs no account."
   path="/"
+  section="Translate"
 >
-  <div class="page-head">
-    <div>
-      <h1>Spell it with your hand.</h1>
-      <p class="lede">
-        Hold an ASL letter in front of the camera and it is added to the text. Every stage tells
-        you what the recogniser can see — not just "camera on".
+  <section class="tile tile-white tile-hero">
+    <div class="tile-inner">
+      <p class="hero-kicker">Now reading A–Z fingerspelling in the browser</p>
+      <h1 class="hero-display">Spell it with your hand.</h1>
+      <p class="lead">
+        Hold an ASL letter in front of the camera and it is added to the text — with every stage
+        explained, so you can see what it can and cannot read.
       </p>
     </div>
-  </div>
+  </section>
 
   <TranslateApp client:only="react">
-    <div slot="fallback" class="card">
-      <p class="empty-note">Loading the translator…</p>
+    <div slot="fallback" class="tile tile-dark">
+      <div class="tile-inner">
+        <p class="output-empty">Starting the translator…</p>
+      </div>
     </div>
   </TranslateApp>
 </Base>

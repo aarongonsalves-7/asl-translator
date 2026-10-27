@@ -26,11 +26,8 @@ export function StageBanner({ state }: StageBannerProps) {
 
   return (
     <section className="stage" data-tone={stage.tone} aria-live="polite" data-stage={stage.id}>
-      <div className="stage-top">
-        <span className="stage-dot" aria-hidden="true" />
-        <span className="card-title">{stage.id.replace(/-/g, ' ')}</span>
-      </div>
       <h2 className="stage-headline" data-testid="stage-headline">
+        <span className="stage-dot" aria-hidden="true" />
         {stage.headline}
       </h2>
       <p className="stage-detail" data-testid="stage-detail">

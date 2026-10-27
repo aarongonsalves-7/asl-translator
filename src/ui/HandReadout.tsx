@@ -24,9 +24,9 @@ export function HandReadout({ state }: HandReadoutProps) {
 
   if (!quality) {
     return (
-      <section className="card" aria-label="What I see">
-        <div className="card-head">
-          <span className="card-title">What I see</span>
+      <section className="panel" aria-label="What I see">
+        <div className="panel-head">
+          <h3 className="panel-title">What I see</h3>
         </div>
         <p className="empty-note">
           Nothing yet. The tracker reports what it finds here — fingers, thumb position, how
@@ -39,10 +39,10 @@ export function HandReadout({ state }: HandReadoutProps) {
   const sizePct = Math.round(quality.handSize * 100);
 
   return (
-    <section className="card" aria-label="What I see">
-      <div className="card-head">
-        <span className="card-title">What I see</span>
-        <span className="empty-note">{state.fps > 0 ? `${Math.round(state.fps)} fps` : ''}</span>
+    <section className="panel" aria-label="What I see">
+      <div className="panel-head">
+        <h3 className="panel-title">What I see</h3>
+        <span className="panel-note">{state.fps > 0 ? `${Math.round(state.fps)} fps` : ''}</span>
       </div>
 
       <div className="readout-grid">

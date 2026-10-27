@@ -1,9 +1,9 @@
 /**
- * The Translate page.
+ * The Translate page body: two full-bleed tiles.
  *
- * Ordering is deliberate: camera first, then the stage banner directly beneath it, then the
- * text, then the explanation. The stage banner is the only element that is allowed to be loud,
- * because it is the only one that tells the user what to do next.
+ * The dark tile is the product — camera edge-to-edge with no frame, the stage banner beneath it,
+ * and the transcript beside it. The white tile below is the explanation. Splitting them this way
+ * follows the design spec's rule that the surface change, not a border, is the section divider.
  */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { loadConfig } from './settings';
@@ -89,81 +89,101 @@ export function TranslateApp() {
   const showProgress = state.stage.id === 'holding' || state.stage.id === 'tracing';
 
   return (
-    <div className="translate">
-      <div className="translate-main">
-        <div className="card" style={{ padding: 'var(--space-sm)' }}>
-          <div
-            className={`viewport${mode === 'live' ? ' viewport-mirrored' : ''}`}
-            ref={boxRef}
-            style={{ aspectRatio: String(aspect) }}
-          >
-            <video ref={videoRef} className="viewport-video" playsInline muted aria-label="Camera preview" />
-            <canvas ref={canvasRef} className="viewport-canvas" aria-hidden="true" />
+    <>
+      <section className="tile tile-dark" aria-label="Translator">
+        <div className="tile-inner">
+          <div className="translate">
+            <div className="translate-main">
+              <div
+                className={`viewport${mode === 'live' ? ' viewport-mirrored' : ''}`}
+                ref={boxRef}
+                style={{ aspectRatio: String(aspect) }}
+              >
+                <video ref={videoRef} className="viewport-video" playsInline muted aria-label="Camera preview" />
+                <canvas ref={canvasRef} className="viewport-canvas" aria-hidden="true" />
 
-            {mode === 'live' ? (
-              <span className="viewport-tag live">
-                <span className="tag-dot" aria-hidden="true" />
-                Live
-              </span>
-            ) : mode === 'demo' ? (
-              <span className="viewport-tag">
-                <span className="tag-dot" style={{ background: '#ffd60a' }} aria-hidden="true" />
-                Demo · spelling {DEMO_WORD}
-              </span>
-            ) : null}
+                {mode === 'live' ? (
+                  <span className="viewport-tag live">
+                    <span className="tag-dot" aria-hidden="true" />
+                    Live
+                  </span>
+                ) : mode === 'demo' ? (
+                  <span className="viewport-tag">
+                    <span className="tag-dot" style={{ background: '#ffd60a' }} aria-hidden="true" />
+                    Demo · spelling {DEMO_WORD}
+                  </span>
+                ) : null}
 
-            {mode !== 'live' ? (
-              <div className="viewport-idle">
-                <span className="idle-glyph" aria-hidden="true">
-                  ✋
-                </span>
-                <p>
-                  {loading
-                    ? `Loading the hand tracker — ${Math.round((loading.progress ?? 0) * 100)}%`
-                    : error
-                      ? error.message
-                      : 'Camera is off. Turn it on to translate your hand, or watch the demo first — it needs no camera at all.'}
-                </p>
+                {mode !== 'live' ? (
+                  <div className="viewport-idle">
+                    <span className="idle-glyph" aria-hidden="true">
+                      ✋
+                    </span>
+                    <p>
+                      {loading
+                        ? `Loading the hand tracker — ${Math.round((loading.progress ?? 0) * 100)}%`
+                        : error
+                          ? error.message
+                          : 'Camera is off. Turn it on to translate your hand, or watch the demo first — it needs no camera at all.'}
+                    </p>
+                  </div>
+                ) : null}
+
+                {showProgress ? (
+                  <div className="viewport-progress">
+                    <span style={{ width: `${Math.round(progress * 100)}%` }} />
+                  </div>
+                ) : null}
               </div>
-            ) : null}
 
-            {showProgress ? (
-              <div className="viewport-progress">
-                <span style={{ width: `${Math.round(progress * 100)}%` }} />
+              <div className="app-controls">
+                {mode === 'live' || mode === 'demo' ? (
+                  <button type="button" className="btn btn-ghost" onClick={api.stop}>
+                    Stop {mode === 'demo' ? 'demo' : 'camera'}
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={startCamera}
+                      disabled={mode === 'starting'}
+                    >
+                      {mode === 'starting' ? 'Starting…' : error ? 'Try camera again' : 'Turn on camera'}
+                    </button>
+                    <button type="button" className="btn btn-ghost" onClick={() => void api.startDemo(DEMO_WORD)}>
+                      Try the demo
+                    </button>
+                  </>
+                )}
+                <span className="caption">Runs here, in this browser.</span>
               </div>
-            ) : null}
-          </div>
 
-          <div className="row" style={{ padding: 'var(--space-sm) var(--space-xxs) 0' }}>
-            {mode === 'live' || mode === 'demo' ? (
-              <button type="button" className="btn btn-quiet" onClick={api.stop}>
-                Stop {mode === 'demo' ? 'demo' : 'camera'}
-              </button>
-            ) : (
-              <>
-                <button type="button" className="btn btn-primary" onClick={startCamera} disabled={mode === 'starting'}>
-                  {mode === 'starting' ? 'Starting…' : error ? 'Try camera again' : 'Turn on camera'}
-                </button>
-                <button type="button" className="btn btn-ghost" onClick={() => void api.startDemo(DEMO_WORD)}>
-                  Try the demo
-                </button>
-              </>
-            )}
-            {mode === 'live' ? (
-              <span className="empty-note">Nothing leaves this device — inference runs here.</span>
-            ) : null}
+              <StageBanner state={state} />
+            </div>
+
+            <aside className="translate-side">
+              <OutputCard state={state} onEdit={api.edit} />
+            </aside>
           </div>
         </div>
+      </section>
 
-        <StageBanner state={state} />
-      </div>
-
-      <aside className="translate-side">
-        <OutputCard state={state} onEdit={api.edit} />
-        <Candidates state={state} />
-        <HandReadout state={state} />
-      </aside>
-    </div>
+      <section className="tile tile-white">
+        <div className="tile-inner">
+          <div className="section-head">
+            <h2 className="display-md">Why it reads what it reads.</h2>
+            <p className="section-note">
+              The runner-up, the failing rules, and the raw hand — every frame.
+            </p>
+          </div>
+          <div className="explain-grid">
+            <Candidates state={state} />
+            <HandReadout state={state} />
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 

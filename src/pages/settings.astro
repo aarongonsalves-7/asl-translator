@@ -7,16 +7,21 @@ import SettingsApp from '../ui/SettingsApp';
   title="Settings — calibrate the ASL translator"
   description="Tune hold time, confidence, margin, response speed and cooldown for your own hand and camera. Stored on this device only."
   path="/settings/"
+  section="Settings"
 >
-  <div class="page-head">
-    <div>
-      <h1>Calibrate it to your hand.</h1>
-      <p class="lede">
+  <section class="tile tile-white tile-hero">
+    <div class="tile-inner">
+      <h1 class="display-lg">Calibrate it to your hand.</h1>
+      <p class="lead lead-wide">
         Defaults suit a hand about 20 cm from a laptop camera. If letters commit too early, raise
         the hold time; if they never commit, lower the confidence or the margin.
       </p>
     </div>
-  </div>
+  </section>
 
-  <SettingsApp client:load />
+  <section class="tile tile-parchment">
+    <div class="tile-inner">
+      <SettingsApp client:load />
+    </div>
+  </section>
 </Base>

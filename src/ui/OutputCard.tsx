@@ -20,10 +20,10 @@ export function OutputCard({ state, onEdit }: OutputCardProps) {
   const letters = history.filter((entry) => entry.kind === 'letter').length;
 
   return (
-    <section className="card-dark" aria-label="Translated text" data-testid="output">
-      <div className="card-head">
-        <span className="card-title">Text</span>
-        <span className="output-meta" style={{ margin: 0 }}>
+    <section className="transcript" aria-label="Translated text" data-testid="output">
+      <div className="transcript-head">
+        <span className="transcript-label">Text</span>
+        <span className="transcript-meta">
           {history.length} commit{history.length === 1 ? '' : 's'} · {letters} letter
           {letters === 1 ? '' : 's'}
         </span>
@@ -55,23 +55,18 @@ export function OutputCard({ state, onEdit }: OutputCardProps) {
       </p>
 
       <div className="output-controls">
-        <button type="button" className="btn btn-on-dark" onClick={() => onEdit('space')}>
+        <button type="button" className="btn btn-primary" onClick={() => onEdit('space')}>
           Space
         </button>
-        <button type="button" className="btn btn-utility" onClick={() => onEdit('backspace')}>
+        <button type="button" className="btn-link" onClick={() => onEdit('backspace')}>
           Backspace
         </button>
-        <button
-          type="button"
-          className="btn btn-utility"
-          onClick={() => onEdit('undo')}
-          disabled={history.length === 0}
-        >
+        <button type="button" className="btn-link" onClick={() => onEdit('undo')} disabled={history.length === 0}>
           Undo
         </button>
         <button
           type="button"
-          className="btn btn-utility"
+          className="btn-link"
           onClick={() => onEdit('clear')}
           disabled={text.length === 0 && history.length === 0}
         >
