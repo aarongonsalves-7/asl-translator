@@ -113,3 +113,36 @@ test('the shell keeps the ElevenLabs chassis: canvas nav, hairline bands, editor
     )
     .toBe('rgb(41, 37, 36)');
 });
+
+test('the mobile menu opens from the hamburger and closes again', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const toggle = page.locator('#nav-toggle');
+  const menu = page.locator('#nav-menu');
+  await expect(toggle).toBeVisible();
+  await expect(menu).toBeHidden();
+
+  await toggle.click();
+  await expect(menu).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+  // The panel is a working menu, not just decoration.
+  await toggle.click();
+  await menu.getByRole('link', { name: 'Alphabet' }).click();
+  await expect(page).toHaveURL(/\/alphabet\/$/);
+});
+
+test('the theme control shows a sun in light mode and a moon in dark mode', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.theme-icon-sun')).toBeVisible();
+  await expect(page.locator('.theme-icon-moon')).toBeHidden();
+
+  await page.getByRole('button', { name: /switch to dark theme/i }).click();
+  await expect(page.locator('.theme-icon-moon')).toBeVisible();
+  await expect(page.locator('.theme-icon-sun')).toBeHidden();
+});

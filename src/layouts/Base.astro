@@ -34,13 +34,15 @@ const nav = [
     <link rel="preload" href="/fonts/eb-garamond-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
     <script is:inline>
-      // Applied before first paint so a dark-mode user never sees a white flash.
+      // Resolve the effective theme before first paint so a dark-mode user never sees a white
+      // flash, and so the sun/moon icon has a theme to key off without waiting for JS at the
+      // bottom of the page.
       (() => {
         try {
           const saved = localStorage.getItem('asl-translator.theme');
-          if (saved === 'light' || saved === 'dark') {
-            document.documentElement.dataset.theme = saved;
-          }
+          const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+          document.documentElement.dataset.theme =
+            saved === 'light' || saved === 'dark' ? saved : systemDark ? 'dark' : 'light';
         } catch {
           /* storage disabled */
         }
@@ -48,11 +50,12 @@ const nav = [
     </script>
   </head>
   <body>
-    <!-- Top nav: 64px canvas bar, quiet menu, outline theme control. -->
+    <!-- Top nav: 64px canvas bar, quiet menu, icon theme control. Below 640px the menu
+         collapses into the hamburger panel. -->
     <nav class="global-nav" aria-label="Main">
       <div class="global-nav-inner">
         <a class="global-nav-brand" href="/">ASL Translator</a>
-        <div class="global-nav-links">
+        <div class="global-nav-links" id="nav-menu">
           {
             nav.map((item) => (
               <a
@@ -66,7 +69,60 @@ const nav = [
           }
         </div>
         <div class="global-nav-actions">
-          <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle">Theme</button>
+          <button type="button" class="btn btn-ghost theme-toggle" id="theme-toggle">
+            <!-- Sun marks the light theme, moon the dark theme. CSS reveals one per theme. -->
+            <svg
+              class="theme-icon theme-icon-sun"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="4"></circle>
+              <path
+                d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"
+              ></path>
+            </svg>
+            <svg
+              class="theme-icon theme-icon-moon"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost nav-toggle"
+            id="nav-toggle"
+            aria-label="Menu"
+            aria-controls="nav-menu"
+            aria-expanded="false"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7h16M4 12h16M4 17h16"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </nav>
@@ -91,25 +147,54 @@ const nav = [
 
     <script is:inline>
       (() => {
+        const root = document.documentElement;
         const button = document.getElementById('theme-toggle');
-        if (!button) return;
         const systemDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-        const current = () => document.documentElement.dataset.theme ?? (systemDark() ? 'dark' : 'light');
-        const sync = () => {
-          button.textContent = current() === 'dark' ? 'Light' : 'Dark';
-          button.setAttribute('aria-label', `Switch to ${current() === 'dark' ? 'light' : 'dark'} theme`);
-        };
-        button.addEventListener('click', () => {
-          const next = current() === 'dark' ? 'light' : 'dark';
-          document.documentElement.dataset.theme = next;
-          try {
-            localStorage.setItem('asl-translator.theme', next);
-          } catch {
-            /* storage disabled */
-          }
+        const current = () => (root.dataset.theme === 'dark' || root.dataset.theme === 'light'
+          ? root.dataset.theme
+          : systemDark()
+            ? 'dark'
+            : 'light');
+
+        if (button) {
+          const sync = () => {
+            const next = current() === 'dark' ? 'light' : 'dark';
+            button.setAttribute('aria-label', `Switch to ${next} theme`);
+            button.setAttribute('title', `Switch to ${next} theme`);
+          };
+          button.addEventListener('click', () => {
+            const next = current() === 'dark' ? 'light' : 'dark';
+            root.dataset.theme = next;
+            try {
+              localStorage.setItem('asl-translator.theme', next);
+            } catch {
+              /* storage disabled */
+            }
+            sync();
+          });
           sync();
-        });
-        sync();
+        }
+
+        const navToggle = document.getElementById('nav-toggle');
+        const navMenu = document.getElementById('nav-menu');
+        if (navToggle && navMenu) {
+          const setOpen = (open) => {
+            navToggle.setAttribute('aria-expanded', String(open));
+            if (open) navMenu.setAttribute('data-open', '');
+            else navMenu.removeAttribute('data-open');
+          };
+          navToggle.addEventListener('click', () => {
+            setOpen(navToggle.getAttribute('aria-expanded') !== 'true');
+          });
+          // Any navigation, or Escape, closes the panel.
+          navMenu.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof Element && target.closest('a')) setOpen(false);
+          });
+          document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') setOpen(false);
+          });
+        }
       })();
     </script>
   </body>

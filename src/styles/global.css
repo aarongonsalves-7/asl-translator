@@ -299,6 +299,43 @@ code {
   gap: var(--space-sm);
 }
 
+/* Scoped to the nav so these beat `.btn`'s own display/padding regardless of source order. */
+.global-nav .theme-toggle {
+  padding: 10px 14px;
+}
+
+/* Sun marks the light theme, moon the dark theme; the head script always resolves one. */
+.theme-icon {
+  display: none;
+}
+
+.theme-icon-sun {
+  display: block;
+}
+
+[data-theme='dark'] .theme-icon-sun {
+  display: none;
+}
+
+[data-theme='dark'] .theme-icon-moon {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .theme-icon-sun {
+    display: none;
+  }
+
+  :root:not([data-theme='light']) .theme-icon-moon {
+    display: block;
+  }
+}
+
+.global-nav .nav-toggle {
+  display: none;
+  padding: 10px 14px;
+}
+
 .badge-pill {
   display: inline-flex;
   align-items: center;
@@ -376,8 +413,8 @@ code {
   inset: -25% -12%;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.6;
-  filter: blur(14px);
+  opacity: 0.55;
+  filter: blur(20px);
   background:
     radial-gradient(38% 46% at 20% 20%, var(--gradient-mint) 0%, transparent 62%),
     radial-gradient(34% 42% at 80% 16%, var(--gradient-peach) 0%, transparent 64%),
@@ -442,7 +479,9 @@ code {
 
 .hero-kicker {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: var(--space-xs);
   color: var(--muted);
   font-size: 12px;
@@ -644,6 +683,8 @@ code {
   width: 100%;
   overflow: hidden;
   border-radius: var(--radius-xl);
+  /* A hairline so the black camera card still reads against the near-black band. */
+  border: 1px solid rgba(255, 255, 255, 0.14);
   background: #000000;
   isolation: isolate;
 }
@@ -1482,10 +1523,35 @@ input[type='range']::-moz-range-thumb {
 }
 
 @media (max-width: 640px) {
-  /* No hamburger in this build: below the tablet break the menu collapses and the footer
-     carries the same links. */
+  /* Below the tablet break the menu collapses into a panel that the hamburger opens. */
+  .global-nav .nav-toggle {
+    display: inline-flex;
+  }
+
+  .global-nav-actions {
+    margin-left: auto;
+  }
+
   .global-nav-links {
     display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--nav-height);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--canvas);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .global-nav-links[data-open] {
+    display: flex;
+  }
+
+  .global-nav-link {
+    padding: 12px 0;
   }
 
   .tile {
