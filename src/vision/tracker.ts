@@ -5,9 +5,9 @@
  * `scripts/prepare-assets.mjs`, so nothing is fetched from a CDN at runtime: the app keeps
  * working offline, and there is no third-party dependency in the request path.
  *
- * Handedness note: MediaPipe decides handedness *assuming the input image is mirrored* (a
- * selfie view). Our video element shows the raw camera frame, so the label has to be swapped
- * back — otherwise every left hand would be labelled right and vice versa.
+ * Hand Landmarker Tasks labels refer to the subject's hands on raw input.
+ * CSS mirrors only the display; it must not swap labels or inference coordinates.
+ * https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker
  */
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 import { LM, type HandFrame, type Vec3 } from './landmarks';
@@ -77,10 +77,10 @@ export class HandTracker {
     const landmarks = result.landmarks?.[0];
     if (!landmarks || landmarks.length < 21) return null;
 
-    const mediapipeLabel = result.handedness?.[0]?.[0]?.categoryName ?? 'Right';
+    const mediapipeLabel = result.handedness?.[0]?.[0]?.categoryName;
+    if (mediapipeLabel !== 'Left' && mediapipeLabel !== 'Right') return null;
     const handednessScore = result.handedness?.[0]?.[0]?.score ?? 0;
-    // Raw (unmirrored) frames: swap MediaPipe's selfie-assumption back.
-    const handedness: 'left' | 'right' = mediapipeLabel === 'Left' ? 'right' : 'left';
+    const handedness = mediapipeLabel === 'Left' ? 'left' : 'right';
 
     const toVec = (point: { x: number; y: number; z: number }): Vec3 => ({
       x: point.x,

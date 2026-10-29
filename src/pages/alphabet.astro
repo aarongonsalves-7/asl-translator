@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { LETTER_LIST } from '../classify/letters';
+import AlphabetPreview from '../ui/AlphabetPreview';
 
 // Built from the same rule table the recogniser scores against, so this page cannot drift out
 // of sync with what the app actually recognises.
@@ -32,19 +33,8 @@ const motionLetters = letters.filter((rule) => rule.motion).map((rule) => rule.l
           {motionLetters.length} motion letters: {motionLetters.join(', ')}
         </p>
       </div>
-
-      <div class="alphabet-grid">
-        {
-          letters.map((rule) => (
-            <article class="letter-card" id={`letter-${rule.letter}`}>
-              <span class="letter-glyph">{rule.letter}</span>
-              <h3>{rule.handshape}</h3>
-              <p>{rule.tip}</p>
-              {rule.motion ? <span class="letter-tag">Motion letter</span> : null}
-            </article>
-          ))
-        }
-      </div>
+      <AlphabetPreview client:load />
+      <p>Compare with signer demonstrations at <a href="https://www.lifeprint.com/asl101/fingerspelling/abc.htm">ASL University</a> and <a href="https://www.handspeak.com/topic/408/">HandSpeak</a>. A skeleton cannot establish skin contact or linguistic correctness.</p>
     </div>
   </section>
 
@@ -54,9 +44,9 @@ const motionLetters = letters.filter((rule) => rule.motion).map((rule) => rule.l
         <h2 class="display-md">Reading the tricky ones.</h2>
       </div>
       <p class="prose">
-        A, S and E are the same closed fist at different thumb and finger tightness; O and C differ
-        by how far the fingertips curve back toward the thumb; M, N and T are separated by which
-        fingertip the thumb rests under. If the translator hesitates on one of those, the stage
+        A and S differ in whether the thumb rests alongside or across the fist. E bends the
+        fingertips toward the bent thumb. O closes the gap left open in C. M, N and T differ
+        in how many fingers cover the thumb and where it emerges. If the translator hesitates, the stage
         banner names the constraint that is closest to failing — usually the thumb.
       </p>
     </div>

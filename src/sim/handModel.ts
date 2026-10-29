@@ -30,6 +30,8 @@ export interface HandShape {
   /** Longitudinal offset added toward the pinky (+) / thumb (-) side, for R. */
   cross?: { index: number; middle: number };
   thumb: { abductDeg: number; flexDeg: number; tipCurlDeg: number };
+  /** Opposed fingertip contact; solved using the same fixed-length thumb chain. */
+  thumbContact?: FingerName;
   /** Image-plane rotation of the whole hand, degrees. */
   rollDeg?: number;
 }
@@ -80,10 +82,16 @@ function buildFinger(name: FingerName, curl: Curl, spreadDeg: number, crossOffse
   let acc = 0;
   for (let i = 0; i < 3; i++) {
     acc += curl[i]!;
-    const dir = rotZ(rotX({ x: 0, y: 1, z: 0 }, acc), spreadDeg);
+    const raw = rotZ(rotX({ x: 0, y: 1, z: 0 }, acc), spreadDeg);
+    // Crossing is an MCP direction change, not extra bone length. Separate the
+    // index in depth so R crosses over the middle rather than through it.
+    const dx = raw.x + crossOffset;
+    const dz = raw.z + (crossOffset > 0 ? 0.18 : 0);
+    const length = Math.hypot(dx, raw.y, dz);
+    const dir = { x: dx / length, y: raw.y / length, z: dz / length };
     const step = bones[i]!;
     cursor = {
-      x: cursor.x + dir.x * step + crossOffset * step,
+      x: cursor.x + dir.x * step,
       y: cursor.y + dir.y * step,
       z: cursor.z + dir.z * step,
     };
@@ -138,6 +146,33 @@ export function buildLocalHand(shape: HandShape): Vec3[] {
       pts[idx] = chain[i]!;
     });
   }
+  if (shape.thumbContact) {
+    const tipIndex = { index: LM.INDEX_TIP, middle: LM.MIDDLE_TIP, ring: LM.RING_TIP, pinky: LM.PINKY_TIP };
+    const target = pts[tipIndex[shape.thumbContact]]!;
+    let best = shape.thumb;
+    const error = (s: HandShape['thumb']) => {
+      const tip = buildThumb(s)[3]!;
+      return Math.hypot(tip.x - target.x, tip.y - target.y, tip.z - target.z);
+    };
+    // Bounded angle search: never translate joints or stretch a bone to fake contact.
+    for (const step of [12, 4, 1]) {
+      for (let iteration = 0; iteration < 30; iteration++) {
+        let next = best;
+        let score = error(best);
+        for (const key of ['abductDeg', 'flexDeg', 'tipCurlDeg'] as const) {
+          const limits = key === 'abductDeg' ? [-55, 35] : key === 'flexDeg' ? [0, 85] : [0, 65];
+          for (const sign of [-1, 1]) {
+            const candidate = { ...best, [key]: Math.max(limits[0]!, Math.min(limits[1]!, best[key] + sign * step)) };
+            const distance = error(candidate);
+            if (distance < score) { next = candidate; score = distance; }
+          }
+        }
+        if (next === best) break;
+        best = next;
+      }
+    }
+    buildThumb(best).forEach((p, i) => { pts[LM.THUMB_CMC + i] = p; });
+  }
   return pts;
 }
 
@@ -191,7 +226,7 @@ export function projectHand(local: Vec3[], options: PoseOptions = {}): HandFrame
   // Tilt the hand in 3D, then project orthographically (a webcam sits far enough away
   // that perspective barely changes landmark geometry).
   const landmarks: Vec3[] = local.map((p) => {
-    let { x, y, z } = { x: p.x * mirror, y: p.y, z: p.z };
+    let { x, y, z } = p;
     // yaw around the palm's long axis (turns the palm away from the camera)
     const x2 = x * Math.cos(yaw) + z * Math.sin(yaw);
     const z2 = -x * Math.sin(yaw) + z * Math.cos(yaw);
@@ -210,9 +245,12 @@ export function projectHand(local: Vec3[], options: PoseOptions = {}): HandFrame
     const dy = iy - cy;
     ix = cx + dx * Math.cos(roll) - dy * Math.sin(roll);
     iy = cy + dx * Math.sin(roll) + dy * Math.cos(roll);
+    ix = cx + (ix - cx) * mirror;
 
     const noise = () => (random() - 0.5) * 2 * jitter;
-    return { x: ix / aspect + noise(), y: iy + noise(), z: (z * scale) / 2 + noise() };
+    // Local +z is palm-side/toward the viewer. MediaPipe uses negative depth
+    // toward the camera and normalizes depth by image width, like x.
+    return { x: ix / aspect + noise(), y: iy + noise(), z: -(z * scale) / (2 * aspect) + noise() };
   });
 
   return {
@@ -226,24 +264,24 @@ export function projectHand(local: Vec3[], options: PoseOptions = {}): HandFrame
 
 const T: Record<string, HandShape> = {
   A: { index: CURLED, middle: CURLED, ring: CURLED, pinky: CURLED, thumb: { abductDeg: 22, flexDeg: 8, tipCurlDeg: 5 } },
-  B: { index: SLIGHT, middle: SLIGHT, ring: SLIGHT, pinky: SLIGHT, spread: { index: 6, middle: 0, ring: 0, pinky: -6 }, thumb: { abductDeg: -18, flexDeg: 46, tipCurlDeg: 18 } },
+  B: { index: SLIGHT, middle: SLIGHT, ring: SLIGHT, pinky: SLIGHT, thumb: { abductDeg: -18, flexDeg: 46, tipCurlDeg: 18 } },
   C: { index: CURVED, middle: CURVED, ring: CURVED, pinky: CURVED, thumb: { abductDeg: 16, flexDeg: 32, tipCurlDeg: 26 } },
   D: { index: EXTENDED, middle: [45, 65, 55], ring: CURLED, pinky: CURLED, thumb: { abductDeg: -2, flexDeg: 22, tipCurlDeg: 38 } },
   E: { index: [50, 72, 58], middle: [50, 72, 58], ring: [50, 72, 58], pinky: [50, 72, 58], thumb: { abductDeg: 0, flexDeg: 60, tipCurlDeg: 42 } },
-  F: { index: [28, 34, 30], middle: EXTENDED, ring: EXTENDED, pinky: EXTENDED, spread: { index: 2, middle: -8, ring: -4, pinky: -12 }, thumb: { abductDeg: 4, flexDeg: 30, tipCurlDeg: 34 } },
-  G: { index: EXTENDED, middle: CURLED, ring: CURLED, pinky: CURLED, thumb: { abductDeg: 30, flexDeg: 6, tipCurlDeg: 4 }, rollDeg: -90 },
-  H: { index: EXTENDED, middle: EXTENDED, ring: CURLED, pinky: CURLED, spread: { index: 2, middle: -2 }, thumb: { abductDeg: 26, flexDeg: 8, tipCurlDeg: 5 }, rollDeg: -90 },
+  F: { index: [48, 48, 35], middle: EXTENDED, ring: EXTENDED, pinky: EXTENDED, spread: { index: 2, middle: -8, ring: -4, pinky: -12 }, thumb: { abductDeg: 4, flexDeg: 30, tipCurlDeg: 34 } },
+  G: { index: EXTENDED, middle: CURLED, ring: CURLED, pinky: CURLED, thumb: { abductDeg: 4, flexDeg: 6, tipCurlDeg: 4 }, rollDeg: -90 },
+  H: { index: EXTENDED, middle: EXTENDED, ring: CURLED, pinky: CURLED, spread: { index: 2, middle: -2 }, thumb: { abductDeg: -10, flexDeg: 42, tipCurlDeg: 30 }, rollDeg: -90 },
   // H is signed with the palm facing the body (edge-on to a front camera).
   I: { index: CURLED, middle: CURLED, ring: CURLED, pinky: EXTENDED, thumb: { abductDeg: -8, flexDeg: 40, tipCurlDeg: 24 } },
   J: { index: CURLED, middle: CURLED, ring: CURLED, pinky: EXTENDED, thumb: { abductDeg: -8, flexDeg: 40, tipCurlDeg: 24 } },
   K: { index: EXTENDED, middle: EXTENDED, ring: CURLED, pinky: CURLED, spread: { index: 16, middle: -16 }, thumb: { abductDeg: -6, flexDeg: 20, tipCurlDeg: 25 } },
-  L: { index: EXTENDED, middle: CURLED, ring: CURLED, pinky: CURLED, thumb: { abductDeg: 58, flexDeg: 2, tipCurlDeg: 2 } },
+  L: { index: EXTENDED, middle: CURLED, ring: CURLED, pinky: CURLED, thumb: { abductDeg: 80, flexDeg: 2, tipCurlDeg: 2 } },
   M: { index: [50, 78, 62], middle: [52, 80, 64], ring: [54, 82, 66], pinky: [58, 84, 68], thumb: { abductDeg: -40, flexDeg: 70, tipCurlDeg: 30 } },
   N: { index: [50, 78, 62], middle: [52, 80, 64], ring: [46, 72, 58], pinky: [52, 78, 64], thumb: { abductDeg: -18, flexDeg: 70, tipCurlDeg: 34 } },
   // O: the thumb tip comes up to meet the index/middle tips; the ring and pinky follow.
   O: { index: ROUNDED, middle: ROUNDED, ring: ROUNDED, pinky: ROUNDED, thumb: { abductDeg: 8, flexDeg: 20, tipCurlDeg: 30 } },
   P: { index: EXTENDED, middle: EXTENDED, ring: CURLED, pinky: CURLED, spread: { index: 16, middle: -16 }, thumb: { abductDeg: -6, flexDeg: 34, tipCurlDeg: 30 }, rollDeg: 180 },
-  Q: { index: EXTENDED, middle: CURLED, ring: CURLED, pinky: CURLED, thumb: { abductDeg: 30, flexDeg: 6, tipCurlDeg: 4 }, rollDeg: 180 },
+  Q: { index: EXTENDED, middle: CURLED, ring: CURLED, pinky: CURLED, thumb: { abductDeg: 4, flexDeg: 6, tipCurlDeg: 4 }, rollDeg: 180 },
   R: { index: EXTENDED, middle: EXTENDED, ring: CURLED, pinky: CURLED, cross: { index: 0.45, middle: -0.02 }, thumb: { abductDeg: -2, flexDeg: 36, tipCurlDeg: 28 } },
   S: { index: TIGHT, middle: TIGHT, ring: TIGHT, pinky: TIGHT, thumb: { abductDeg: -14, flexDeg: 52, tipCurlDeg: 40 } },
   T: { index: [52, 80, 64], middle: [54, 82, 66], ring: CURLED, pinky: CURLED, thumb: { abductDeg: -4, flexDeg: 45, tipCurlDeg: 20 } },
@@ -258,7 +296,8 @@ const T: Record<string, HandShape> = {
 export function shapeFor(letter: string): HandShape {
   const shape = T[letter.toUpperCase()];
   if (!shape) throw new Error(`No synthetic hand shape defined for "${letter}"`);
-  return shape;
+  const thumbContact = ({ D: 'middle', F: 'index', O: 'index', W: 'pinky' } as const)[letter.toUpperCase() as 'D' | 'F' | 'O' | 'W'];
+  return thumbContact ? { ...shape, thumbContact } : shape;
 }
 
 export function simulateLetter(letter: string, options: PoseOptions = {}): HandFrame {
@@ -270,7 +309,7 @@ export function simulateLetter(letter: string, options: PoseOptions = {}): HandF
   const cy = options.cy ?? (Math.abs(rollDeg) > 90 ? 0.4 : undefined);
   return projectHand(buildLocalHand(shape), {
     ...options,
-    rollDeg,
+    rollDeg: options.rollDeg ?? rollDeg,
     ...(cy !== undefined ? { cy } : {}),
   });
 }
@@ -316,19 +355,23 @@ export function simulateSequence(
   const baseCx = options.cx ?? aspect / 2;
   const baseCy = options.cy ?? 0.56;
 
-  if (traceFrames > 0) {
+  const motion = letterUpper === 'J' || letterUpper === 'Z';
+  let end = { x: 0, y: 0 };
+  const mirror = options.handedness === 'left' ? -1 : 1;
+  if (traceFrames > 0 && motion) {
     const kind = letterUpper === 'J' ? 'j' : 'z';
     const path = TRACE_PATHS[kind];
     for (let i = 0; i < traceFrames; i++) {
-      const t = (i / (traceFrames - 1)) * (path.length - 1);
+      const t = (traceFrames === 1 ? 0 : i / (traceFrames - 1)) * (path.length - 1);
       const i0 = Math.min(Math.floor(t), path.length - 2);
       const frac = t - i0;
       const a = path[i0]!;
       const b = path[i0 + 1]!;
       const offset = {
-        x: a.x + (b.x - a.x) * frac,
+        x: (a.x + (b.x - a.x) * frac) * mirror,
         y: a.y + (b.y - a.y) * frac,
       };
+      end = offset;
       frames.push(
         projectHand(buildLocalHand(shape), {
           rollDeg: shape.rollDeg ?? 0,
@@ -348,8 +391,8 @@ export function simulateSequence(
       projectHand(buildLocalHand(shape), {
         rollDeg: shape.rollDeg ?? 0,
         ...options,
-        cx: baseCx,
-        cy: baseCy,
+        cx: baseCx + end.x * baseScale,
+        cy: baseCy - end.y * baseScale,
         timestampMs: (start + i) * 33,
         frameId: start + i,
       }),

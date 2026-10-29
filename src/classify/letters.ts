@@ -108,6 +108,12 @@ const meanPipBend = (f: HandFeatures): number =>
     f.finger.pinky.pipBendDeg) /
   4;
 
+// K can be foreshortened into an apparent U: the opposed, raised thumb is
+// stronger evidence than a large image-plane V. Keep that evidence shared.
+const raisedThumb = (f: HandFeatures): number =>
+  f.thumbBetweenKnuckles * ramp(f.thumb.tipY, 0.85, 1.08) *
+  Math.max(f.spread.im, ramp(f.indexMiddleAngleDeg, 5, 13));
+
 export const LETTER_ORDER: Letter[] = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -239,7 +245,6 @@ export const LETTERS: Record<Letter, LetterRule> = {
       together(f, 'im', 2.5),
       curl(f, 'ring'), curl(f, 'pinky'),
       pointingSideways(f, 2.5),
-      c('thumb-alongside', 'thumb alongside the index', f.thumb.extension, 1.2),
     ],
   },
   I: {
@@ -274,7 +279,9 @@ export const LETTERS: Record<Letter, LetterRule> = {
     prior: 1,
     build: (f) => [
       ext(f, 'index'), ext(f, 'middle'),
-      apart(f, 'im', 2.2),
+      c('spread-or-thumb', 'fingers separated or thumb raised between them', Math.max(f.spread.im, raisedThumb(f)), 2.2),
+      c('k-finger-direction', 'middle finger separated or angled forward from the index', Math.max(f.spread.im, ramp(f.indexMiddleAngleDeg, 5, 13)), 2),
+      c('not-crossed', 'fingers not crossed', 1 - f.crossedIM, 2),
       curl(f, 'ring'), curl(f, 'pinky'),
       c('thumb-between', 'thumb pressed between the index and middle fingers', ramp(f.thumbBetweenKnuckles, 0.55, 0.85) ** 2, 2.5),
       c('thumb-raised', 'thumb tip raised between the fingers', ramp(f.thumb.tipY, 0.92, 1.08), 2),
@@ -329,16 +336,12 @@ export const LETTERS: Record<Letter, LetterRule> = {
     prior: 1,
     build: (f) => [
       // The thumb opposes the index and middle tips; the ring and pinky tuck in behind them.
-      // Requiring all four to touch would rule out a real hand — the thumb cannot reach.
+      // Do not require four simultaneous point contacts from noisy tracked landmarks.
       contact(f, 'index', 2.5), contact(f, 'middle', 2.5),
-      contact(f, 'ring', 0.6), contact(f, 'pinky', 0.6),
-      // O and E both bring the fingertips to the thumb and both bend the PIP joints hard, so
-      // finger curvature cannot separate them (an earlier rule tried, and simply refused to
-      // commit a textbook O). What differs is the thumb: in O it is out in front, with its tip
-      // up at fingertip height; in E it is folded low against the palm — which is exactly what
-      // E's `thumb-tip-low` constraint measures from the other side.
+      // Thumb height helps distinguish O from E. Rounded rather than tightly folded
+      // fingers also distinguish an opposed thumb from the tucked thumb of T.
       c('thumb-tip-high', 'thumb tip up at fingertip height', ramp(f.thumb.tipY, 0.6, 1.05), 2.5),
-      c('thumb-out-front', 'thumb held out, not folded onto the palm', f.thumb.extension, 1.5),
+      c('rounded-fingers', 'fingers rounded rather than folded into a fist', band(meanPipBend(f), 30, 85, 15), 2),
       // In a closed fist the thumb tip happens to land near the curled fingertips, so contact
       // alone would read an I (pinky up, thumb across the fingers) as an O. The pinky is the
       // reliable difference: O curls it to the thumb, I extends it.
@@ -381,7 +384,6 @@ export const LETTERS: Record<Letter, LetterRule> = {
       ext(f, 'index', 2), ext(f, 'middle', 2),
       c('crossed', 'index crossed over the middle finger', f.crossedIM, 3),
       curl(f, 'ring'), curl(f, 'pinky'),
-      c('not-spread', 'fingers not fanned apart', 1 - f.spread.im, 1.5),
       pointingUp(f, 1.2),
     ],
   },
@@ -403,6 +405,7 @@ export const LETTERS: Record<Letter, LetterRule> = {
     tip: 'Make a fist and push the thumb up between the index and middle fingers.',
     prior: 1,
     build: (f) => [
+      c('closed-knuckles', 'fingers folded into a fist', ramp(meanPipBend(f), 85, 105), 2),
       curl(f, 'index', 2.2), curl(f, 'middle', 2.2), curl(f, 'ring', 1.8), curl(f, 'pinky', 1.8),
       c('thumb-high', 'thumb tip poking up between the knuckles', ramp(f.thumb.tipY, 0.62, 0.95), 2.8),
       c('thumb-between', 'thumb between the index and middle fingers', band(f.thumb.across, 0.02, 0.5, 0.15), 2),
@@ -416,7 +419,9 @@ export const LETTERS: Record<Letter, LetterRule> = {
     prior: 1,
     build: (f) => [
       ext(f, 'index', 2), ext(f, 'middle', 2),
+      c('straight-pair', 'index and middle straight rather than curved', ramp(Math.min(f.finger.index.extension, f.finger.middle.extension), 0.75, 0.95), 2),
       together(f, 'im', 2.8),
+      c('thumb-tucked', 'thumb tucked below the extended fingers', 1 - ramp(raisedThumb(f), 0.25, 0.7), 2.5),
       c('not-crossed', 'fingers together, not crossed', 1 - f.crossedIM, 2),
       curl(f, 'ring'), curl(f, 'pinky'),
       pointingUp(f, 1.5),
@@ -458,9 +463,10 @@ export const LETTERS: Record<Letter, LetterRule> = {
     prior: 1,
     build: (f) => [
       c('hooked', 'index hooked at the tip', f.finger.index.hooked, 3),
+      c('index-raised', 'index base more open than the other curled fingers', ramp((f.finger.middle.mcpBendDeg + f.finger.ring.mcpBendDeg + f.finger.pinky.mcpBendDeg) / 3 - f.finger.index.mcpBendDeg, 8, 25), 3),
       c('index-not-straight', 'index not straight', 1 - ramp(f.finger.index.extension, 0.7, 0.98), 1.5),
       curl(f, 'middle'), curl(f, 'ring'), curl(f, 'pinky'),
-      c('index-open-knuckle', 'index knuckle stays open', 1 - ramp(f.finger.index.pipBendDeg, 45, 85), 1.5),
+      c('index-open-knuckle', 'index base knuckle stays open', 1 - ramp(f.finger.index.mcpBendDeg, 35, 80), 1.5),
     ],
   },
   Y: {

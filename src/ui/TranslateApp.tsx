@@ -5,7 +5,9 @@
  * and the transcript beside it. The white tile below is the explanation. Splitting them this way
  * follows the design spec's rule that the surface change, not a border, is the section divider.
  */
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LETTER_ORDER } from '../classify/letters';
+import type { HandFrame } from '../vision/landmarks';
 import { loadConfig } from './settings';
 import { useRecognition } from './useRecognition';
 import { StageBanner } from './StageBanner';
@@ -21,13 +23,29 @@ export function TranslateApp() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const samplesRef = useRef<HandFrame[]>([]);
+  const [expectedLetter, setExpectedLetter] = useState('E');
+  const [sampleMessage, setSampleMessage] = useState('');
 
   const onFrame = useCallback((frame: Parameters<typeof drawHand>[1]) => {
     drawHand(canvasRef.current, frame);
+    if (frame) {
+      samplesRef.current.push(frame);
+      if (samplesRef.current.length > 60) samplesRef.current.shift();
+    }
   }, []);
 
   const api = useRecognition(initialConfig, onFrame);
   const { state, mode, error, loading, aspect } = api;
+  const saveSample = () => {
+    if (!samplesRef.current.length) { setSampleMessage('No tracked hand yet. Hold the letter in view first.'); return; }
+    const blob = new Blob([JSON.stringify({ version: 1, expectedLetter, aspect, config: state.config, frames: samplesRef.current, observedText: state.text, candidates: state.ranked }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = `asl-${expectedLetter}-sample.json`; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setSampleMessage('Saved locally. The file contains hand tracking points, not camera images.');
+  };
+  useEffect(() => { samplesRef.current = []; setSampleMessage(''); }, [mode]);
 
   // Keep the overlay's backing store in step with its CSS box, at device pixel density, so the
   // skeleton lines do not look soft on retina displays.
@@ -181,6 +199,13 @@ export function TranslateApp() {
             <Candidates state={state} />
             <HandReadout state={state} />
           </div>
+          {mode === 'live' ? <details className="recognition-sample">
+            <summary>Save a recognition mistake for review</summary>
+            <p>Hold the intended letter steady, then save the recent tracking points. No camera images are saved or uploaded.</p>
+            <label>Intended letter <select value={expectedLetter} onChange={e => setExpectedLetter(e.target.value)}>{LETTER_ORDER.map(letter => <option key={letter}>{letter}</option>)}</select></label>
+            <button type="button" className="btn btn-ghost" onClick={saveSample}>Save recognition sample</button>
+            <p role="status">{sampleMessage}</p>
+          </details> : null}
         </div>
       </section>
     </>

@@ -22,6 +22,8 @@ export interface FingerFeatures {
   /** 0 = fully curled, 1 = straight. */
   extension: number;
   pipBendDeg: number;
+  /** Bend where the proximal finger meets the palm (MCP), not the PIP. */
+  mcpBendDeg: number;
   dipBendDeg: number;
   /** X-like hook: the knuckle stays open while the tip curls in. */
   hooked: number;
@@ -66,6 +68,8 @@ export interface HandFeatures {
   crossedIM: number;
   /** Thumb tip sitting between the index and middle knuckles (K, T). */
   thumbBetweenKnuckles: number;
+  /** Proximal index/middle divergence, including a forward-angled middle finger in K. */
+  indexMiddleAngleDeg: number;
   extendedCount: number;
   /** Mean extension of the four fingers: 0 = fist, 1 = open hand. */
   openness: number;
@@ -89,6 +93,7 @@ function fingerFeatures(hand: CanonicalHand, index: number): FingerFeatures {
 
   const pipBendDeg = angleBetweenDeg(vec.sub(pip, mcp), vec.sub(dip, pip));
   const dipBendDeg = angleBetweenDeg(vec.sub(dip, pip), vec.sub(tip, dip));
+  const mcpBendDeg = angleBetweenDeg(vec.sub(pip, mcp), vec.sub(mcp, hand.pts[LM.WRIST]!));
 
   // Straightness and joint bend measure the same thing from different angles; blending them
   // makes the score robust when a fingertip is occluded or foreshortened.
@@ -96,13 +101,15 @@ function fingerFeatures(hand: CanonicalHand, index: number): FingerFeatures {
   const extBend = 1 - ramp(pipBendDeg + dipBendDeg, 55, 145);
   const extension = clamp01(0.6 * extStraight + 0.4 * extBend);
 
-  // A hook bends late (at the DIP) while the knuckle stays open.
-  const hooked = clamp01((1 - ramp(pipBendDeg, 30, 72)) * ramp(dipBendDeg, 38, 82));
+  // X bends at the PIP (often with a relatively straight DIP). The MCP stays
+  // open; requiring an open PIP made an ordinary hooked X impossible.
+  const hooked = clamp01((1 - ramp(mcpBendDeg, 15, 45)) * ramp(Math.max(pipBendDeg, dipBendDeg), 25, 65));
 
   return {
     name: f.name,
     extension,
     pipBendDeg,
+    mcpBendDeg,
     dipBendDeg,
     hooked,
     spreadDeg: 0,
@@ -111,9 +118,14 @@ function fingerFeatures(hand: CanonicalHand, index: number): FingerFeatures {
   };
 }
 
-function spreadAngle(a: FingerFeatures, b: FingerFeatures): number {
-  const va = vec.normalize({ x: a.tip.x, y: a.tip.y, z: 0 });
-  const vb = vec.normalize({ x: b.tip.x, y: b.tip.y, z: 0 });
+function spreadAngle(hand: CanonicalHand, a: number, b: number): number {
+  const direction = (i: number) => {
+    const f = FINGERS[i]!;
+    const v = vec.sub(hand.pts[f.tip]!, hand.pts[f.mcp]!);
+    return vec.normalize({ x: v.x, y: v.y, z: 0 });
+  };
+  const va = direction(a);
+  const vb = direction(b);
   return angleBetweenDeg(va, vb);
 }
 
@@ -127,10 +139,10 @@ export function extractFeatures(hand: CanonicalHand): HandFeatures {
   ];
 
   // Fan angle between neighbouring fingertips (parallel fingers are ~0 degrees).
-  index.spreadDeg = spreadAngle(index, middle);
-  middle.spreadDeg = spreadAngle(index, middle);
-  ring.spreadDeg = spreadAngle(middle, ring);
-  pinky.spreadDeg = spreadAngle(ring, pinky);
+  index.spreadDeg = spreadAngle(hand, 0, 1);
+  middle.spreadDeg = spreadAngle(hand, 0, 1);
+  ring.spreadDeg = spreadAngle(hand, 1, 2);
+  pinky.spreadDeg = spreadAngle(hand, 2, 3);
 
   const thumbCmc = hand.pts[LM.THUMB_CMC]!;
   const thumbMcp = hand.pts[LM.THUMB_MCP]!;
@@ -165,10 +177,6 @@ export function extractFeatures(hand: CanonicalHand): HandFeatures {
     contacts[f.name] = 1 - ramp(vec.dist(thumbTip, f.tip), 0.3, 0.62);
   }
 
-  const imageIndexMcp = hand.imagePts[LM.INDEX_MCP]!;
-  const imageIndexTip = hand.imagePts[LM.INDEX_TIP]!;
-  const imageMiddleMcp = hand.imagePts[LM.MIDDLE_MCP]!;
-  const imageMiddleTip = hand.imagePts[LM.MIDDLE_TIP]!;
   const imageThumbMcp = hand.imagePts[LM.THUMB_MCP]!;
   const imageThumbTip = hand.imagePts[LM.THUMB_TIP]!;
 
@@ -178,8 +186,8 @@ export function extractFeatures(hand: CanonicalHand): HandFeatures {
     f.extension > best.extension ? f : best,
   );
   const pointDirValid = reaching.extension >= 0.45;
-  const pointSource =
-    reaching === middle ? { mcp: imageMiddleMcp, tip: imageMiddleTip } : { mcp: imageIndexMcp, tip: imageIndexTip };
+  const reachingJoints = FINGERS.find(f => f.name === reaching.name)!;
+  const pointSource = { mcp: hand.imagePts[reachingJoints.mcp]!, tip: hand.imagePts[reachingJoints.tip]! };
   const pointVec = vec.sub(pointSource.tip, pointSource.mcp);
   const pointDirDeg = (Math.atan2(pointVec.x, -pointVec.y) * 180) / Math.PI;
 
@@ -199,6 +207,11 @@ export function extractFeatures(hand: CanonicalHand): HandFeatures {
   // hand's facing, so normalise by it: lift > 0 always means "off the palm, toward the palm side".
   const palmSide = hand.palmFacing < 0 ? -1 : 1;
   const lift = clamp01((-thumbTip.z * palmSide) / 0.55);
+  // Command gestures require a genuinely extended thumb clear of the fist.
+  // Vertical orientation alone also describes a partly occluded M/N thumb.
+  const commandThumb = (1 - ramp(thumbIpBendDeg, 18, 38)) *
+    (1 - ramp(across, -0.05, 0.2)) *
+    ramp(vec.dist(thumbTip, index.tip), 0.25, 0.42);
 
   const knuckleGap = vec.dist(indexMcp, middleMcp);
   // Lateral only: "between the knuckles" is a relationship in the palm plane, and the thumb
@@ -230,21 +243,22 @@ export function extractFeatures(hand: CanonicalHand): HandFeatures {
       upAlong: clamp01(ramp(thumbTip.y - indexMcp.y, 0.05, 0.5) * ramp(-thumbTip.x, 0.3, 0.95)),
       ipBendDeg: thumbIpBendDeg,
       reach: thumbReach,
-      thumbsUp: clamp01(fistness * ramp(verticality, 0.55, 0.85) * ramp(-thumbVec.y / thumbLen, 0.4, 0.8)),
+      thumbsUp: clamp01(commandThumb * fistness * ramp(verticality, 0.55, 0.85) * ramp(-thumbVec.y / thumbLen, 0.4, 0.8)),
       thumbsDown: clamp01(
-        fistness * ramp(verticality, 0.55, 0.85) * ramp(thumbVec.y / thumbLen, 0.4, 0.8),
+        commandThumb * fistness * ramp(verticality, 0.55, 0.85) * ramp(thumbVec.y / thumbLen, 0.4, 0.8),
       ),
     },
     contacts,
     indexStraightness: index.extension,
     spread: {
       im: ramp(index.spreadDeg, 8, 26),
-      mr: ramp(middle.spreadDeg, 8, 26),
-      rp: ramp(ring.spreadDeg, 8, 26),
+      mr: ramp(ring.spreadDeg, 8, 26),
+      rp: ramp(pinky.spreadDeg, 8, 26),
       thumbIndex: ramp(Math.abs(abductDeg), 20, 55),
     },
     crossedIM: middleAxis ? clamp01(ramp(-lateralOffset, 0.02, 0.22)) : 0,
     thumbBetweenKnuckles: clamp01(0.5 * thumbBetween + 0.5 * ramp(knuckleGap, 0, 0.4)),
+    indexMiddleAngleDeg: angleBetweenDeg(vec.sub(hand.pts[LM.INDEX_PIP]!, indexMcp), vec.sub(hand.pts[LM.MIDDLE_PIP]!, middleMcp)),
     extendedCount:
       (index.extension > 0.5 ? 1 : 0) +
       (middle.extension > 0.5 ? 1 : 0) +

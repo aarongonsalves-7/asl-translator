@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+const contact = import.meta.env.PRIVACY_CONTACT_EMAIL;
+const operator = import.meta.env.OPERATOR_NAME;
+---
+<Base title="Privacy policy — ASL Translator" description="How ASL Translator handles camera access, hand tracking, local settings and optional sample downloads." path="/privacy/" section="Privacy">
+  <section class="tile tile-white"><div class="tile-inner legal-prose">
+    <h1 class="display-lg">Privacy policy</h1>
+    <p>Last updated: 29 October 2026.</p>
+    {operator && <p>This instance of ASL Translator is operated by {operator}.</p>}
+    <h2>Camera and hand tracking</h2>
+    <p>The translator requests camera access only when you choose “Turn on camera.” Video frames are processed in your browser to estimate hand landmarks and letters. The application does not upload camera frames, hand landmarks or translated text to a server. It does not request microphone access. Stop the camera using the Stop camera button; camera permissions can also be revoked in your browser.</p>
+    <h2>Temporary data and downloads</h2>
+    <p>Translated text, recent hand tracking points and recognition history are held in page memory while you use the app. Reloading or closing the page clears them. “Save recognition sample” downloads up to 60 recent tracking frames, the intended letter, settings and observed results to your device. It does not save video or upload the file. Downloads remain on your device until you delete them; share them only if you choose.</p>
+    <h2>Browser storage</h2>
+    <p>The app remembers your chosen theme in <code>asl-translator.theme</code> and calibration settings in <code>asl-translator.settings.v1</code> using local storage. These preferences remain until replaced or removed. Reset defaults on the Settings page removes saved calibration; clearing this site's browser data removes both preferences. The current app does not set advertising or analytics cookies, load Google Analytics, or use tracking pixels.</p>
+    <h2>Hosting and external links</h2>
+    <p>Your browser requests page files, fonts, the hand tracking model and runtime from the host serving this site. As with other websites, requests expose connection information such as an IP address and browser headers to the hosting infrastructure. Hosting logs, retention and operational access depend on the deployment operator and provider; this app does not control their policies. Linked ASL reference sites handle visits under their own privacy notices. Self-hosted fonts and tracking assets avoid third-party asset requests during normal use.</p>
+    <h2>Your choices and questions</h2>
+    <p>You can use the demo without granting camera access, stop the camera, clear browser storage and delete downloaded samples. The app has no account or inquiry submission service.</p>
+    {contact && <p>For privacy questions about this deployment, email <a href={`mailto:${contact}`}>{contact}</a>.</p>}
+    <p>This notice describes the current application. It does not assert certification or compliance with any privacy regime. Any future analytics, uploads or accounts require this notice and the relevant consent controls to be reviewed before they are enabled.</p>
+  </div></section>
+</Base>

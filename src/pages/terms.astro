@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+const operator = import.meta.env.OPERATOR_NAME;
+const contact = import.meta.env.PRIVACY_CONTACT_EMAIL;
+---
+<Base title="Terms of use — ASL Translator" description="Scope, limitations and responsible use of the on-device ASL fingerspelling tool." path="/terms/" section="Terms">
+  <section class="tile tile-white"><div class="tile-inner legal-prose">
+    <h1 class="display-lg">Terms of use</h1>
+    <p>Last updated: 29 October 2026.</p>
+    {operator && <p>This instance is operated by {operator}.</p>}
+    <h2>What this tool offers</h2>
+    <p>ASL Translator is an experimental browser tool for individual American Sign Language alphabet letters. It does not translate full ASL, grammar or conversation. The alphabet preview is an approximate procedural skeleton, not a linguistically certified teaching avatar. There is currently no account, paid plan or inquiry service in the application.</p>
+    <h2>Accuracy and appropriate use</h2>
+    <p>Recognition can make mistakes or omit letters, particularly with occlusion, lighting changes and variation between signers. Check all output before relying on it or sharing it. Do not rely on this tool for emergencies, medical or legal communication, or as a replacement for a qualified ASL interpreter. Learn and verify signs with qualified Deaf educators and fluent signers.</p>
+    <h2>Your device and information</h2>
+    <p>You control camera permission and any optional sample downloads. Use the tool with a hand you are authorized to capture. Do not include someone else's personal or confidential information in samples you choose to share. See the <a href="/privacy/">privacy policy</a> for local processing and storage details.</p>
+    <h2>Availability and external materials</h2>
+    <p>Browser support, hardware and hosting availability affect whether the app works. Features may change. Reference links are provided for further learning; their owners control their contents and terms. Linking to a reference does not grant rights to copy or redistribute its materials.</p>
+    <h2>Rights and questions</h2>
+    <p>These terms do not exclude any rights or remedies that applicable law does not permit to be excluded. No specific service level, response time or accuracy guarantee is offered by this application.</p>
+    {contact && <p>Questions about this deployment can be sent to <a href={`mailto:${contact}`}>{contact}</a>.</p>}
+  </div></section>
+</Base>

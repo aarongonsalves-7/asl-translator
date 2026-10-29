@@ -82,7 +82,7 @@ export interface HandFrame {
   landmarks: Vec3[];
   /** 21 landmarks in metres, hand-centred. Optional: only used for thumb-depth refinement. */
   world?: Vec3[];
-  /** The signer's actual hand (already un-swapped from MediaPipe's selfie convention). */
+  /** The signer's actual hand on raw input (CSS preview mirroring does not change it). */
   handedness: 'left' | 'right';
   handednessScore: number;
   timestampMs: number;
@@ -134,7 +134,8 @@ export function canonicalize(
   aspect: number,
   previous?: CanonicalHand | null,
 ): CanonicalHand {
-  const imagePts = frame.landmarks.map((p) => ({ x: p.x * aspect, y: p.y, z: p.z }));
+  // MediaPipe depth uses the same scale as normalized x, not normalized y.
+  const imagePts = frame.landmarks.map((p) => ({ x: p.x * aspect, y: p.y, z: p.z * aspect }));
   const wrist = imagePts[LM.WRIST]!;
   const indexMcp = imagePts[LM.INDEX_MCP]!;
   const middleMcp = imagePts[LM.MIDDLE_MCP]!;
@@ -160,7 +161,10 @@ export function canonicalize(
   // (index MCP -> pinky MCP), so the thumb always lands on -X whichever hand signs.
   // Mirroring here as well would cancel that out and flip the thumb side.
   // The z axis, however, does flip with handedness (mirrored basis), so normalise it.
-  const depthSign = handednessSign;
+  // cross(across, up) points toward the camera on a frontal right palm.
+  // MediaPipe's negative z is nearer the camera: preserve that convention in
+  // the palm frame rather than turning an exposed thumb into a buried thumb.
+  const depthSign = -handednessSign;
 
   const pts = imagePts.map((p) => {
     const rel = vec.sub(p, wrist);

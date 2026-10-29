@@ -4,6 +4,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "module": "ESNext",
     "target": "ES2022",
     "lib": ["ES2023", "DOM", "DOM.Iterable", "WebWorker"],

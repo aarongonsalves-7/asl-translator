@@ -98,6 +98,12 @@ export interface FeedInput {
 
 const MAX_TRACE_MS = 2600;
 const TRACE_MIN_POINT_GAP = 0.03;
+/** A few noisy points are not intentional J/Z movement. Palm-length units. */
+function traceHasMovement(path: PathPoint[]): boolean {
+  if (path.length < 3) return false;
+  const xs = path.map(p => p.x), ys = path.map(p => p.y);
+  return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) >= 0.3;
+}
 const TRACE_SHAPE_GRACE_MS = 220;
 const REARM_FRAMES = 5;
 
@@ -253,6 +259,11 @@ export class RecognitionEngine {
 
     if (!hand) return this.handleAbsentHand(nowMs);
 
+    // A new signing hand must not inherit another hand's partial hold or trace.
+    if (this.lastCanonical && this.lastCanonical.handedness !== hand.handedness) {
+      this.resetRecognition();
+    }
+
     this.lastHandMs = nowMs;
     const canonical = canonicalize(hand, aspect, this.lastCanonical);
     this.lastCanonical = canonical;
@@ -298,7 +309,7 @@ export class RecognitionEngine {
     // While a J or Z is being drawn the hand is necessarily moving through a still handshape
     // (J starts from I, Z from a pointing index), so the letter hold stands down until the
     // trace either lands or breaks.
-    const traceActive = trace.kind !== null && trace.path.length > 2;
+    const traceActive = trace.kind !== null && traceHasMovement(trace.path);
     const hold = this.advanceHold(
       traceActive ? null : candidate,
       readable,
@@ -638,7 +649,7 @@ export class RecognitionEngine {
     if (cooldownMs > 0) return stageCopy('cooldown', { cooldownMs });
     if (quality.unreadable) return stageCopy('unreadable', { unreadableReason: quality.unreadable });
 
-    if (trace.kind) {
+    if (trace.kind && traceHasMovement(trace.path)) {
       return stageCopy('tracing', {
         traceKind: trace.kind,
         progress: trace.progress,

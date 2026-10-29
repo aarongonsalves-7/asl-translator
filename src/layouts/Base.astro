@@ -1,11 +1,13 @@
 ---
 import '../styles/global.css';
+import NavIcon from '../ui/NavIcon.astro';
 
 interface Props {
   title: string;
   description?: string;
   path: string;
   section: string;
+  noindex?: boolean;
 }
 
 const {
@@ -13,7 +15,10 @@ const {
   description = 'A webcam ASL fingerspelling translator that runs entirely on your device. Every stage tells you what the recogniser can see and what to do next.',
   path,
   section,
+  noindex = false,
 } = Astro.props;
+const canonical = Astro.site && !noindex ? new URL(path, Astro.site).href : undefined;
+const socialImage = Astro.site ? new URL('/social-preview.png', Astro.site).href : '/social-preview.png';
 
 const nav = [
   { href: '/', label: 'Translate', section: 'Translate' },
@@ -29,6 +34,22 @@ const nav = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content={noindex || !Astro.site ? 'noindex, follow' : 'index, follow'} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ASL Translator" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ASL Translator — on-device fingerspelling, with alphabet and calibration tools" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+    <meta name="twitter:image:alt" content="ASL Translator — on-device fingerspelling" />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preload" href="/fonts/eb-garamond-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -50,6 +71,7 @@ const nav = [
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <!-- Top nav: 64px canvas bar, quiet menu, icon theme control. Below 640px the menu
          collapses into the hamburger panel. -->
     <nav class="global-nav" aria-label="Main">
@@ -61,9 +83,11 @@ const nav = [
               <a
                 class="global-nav-link"
                 href={item.href}
+                aria-label={item.label}
+                title={item.label}
                 aria-current={path === item.href ? 'page' : undefined}
               >
-                {item.label}
+                <NavIcon name={item.label} />
               </a>
             ))
           }
@@ -127,7 +151,8 @@ const nav = [
       </div>
     </nav>
 
-    <main data-section={section}>
+    <main id="main-content" tabindex="-1" data-section={section}>
+      {path !== '/' && <nav class="breadcrumbs tile-inner" aria-label="Breadcrumb"><a href="/">Translator</a><span aria-hidden="true"> / </span><span aria-current="page">{section}</span></nav>}
       <slot />
     </main>
 
@@ -137,13 +162,13 @@ const nav = [
           Alphabet recognition only. It is a learning and accessibility aid, not a substitute for a
           qualified ASL interpreter. The camera stream and every landmark stay on this device.
         </p>
-        <div class="footer-links">
-          <a href="/">Translate</a>
-          <a href="/alphabet/">Alphabet</a>
-          <a href="/settings/">Settings</a>
-        </div>
+        <nav class="footer-links" aria-label="Bottom">
+          {nav.map(item => <a class="global-nav-link" href={item.href} aria-label={item.label} title={item.label} aria-current={path === item.href ? 'page' : undefined}><NavIcon name={item.label} /></a>)}
+        </nav>
+        <nav class="legal-links" aria-label="Information"><a href="/privacy/">Privacy policy</a><a href="/terms/">Terms of use</a><a href="/#faq">FAQs</a></nav>
       </div>
     </footer>
+    {['/', '/alphabet/', '/settings/'].includes(path) && <a class="mobile-cta btn btn-primary" href="/#translator">{path === '/' ? 'Go to camera controls' : 'Open translator'}</a>}
 
     <script is:inline>
       (() => {

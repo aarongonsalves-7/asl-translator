@@ -1,6 +1,7 @@
 # ASL Translator
 
 [▶ Watch the launch video](https://github.com/aarongonsalves-7/asl-translator/raw/refs/heads/main/brag-output/brag.mp4)
+Production setup and unresolved legal/hosting decisions: [deployment checklist](docs/production-readiness.md).
 
 Fingerspell ASL letters to your webcam and read them back as text. Everything — camera capture,
 hand tracking, classification — runs in the browser. No account, no server, no API keys.
@@ -28,8 +29,7 @@ moment the app says what it can see (*"hand is small in frame"*, *"hold steady �
 | Backend, database, API keys | None exist | £0 |
 
 Nothing is fetched from a CDN at runtime: `npm run assets` copies the wasm runtime and downloads
-the 7.8 MB model into `public/`, both gitignored. After the first load the app works with the
-network off.
+the 7.8 MB model into `public/`, both gitignored. Once the assets are loaded, recognition works in the open page with the network off. Offline reload is not guaranteed; there is no service worker.
 
 **HTTPS is mandatory, not optional** — browsers refuse camera access on plain `http://` (except
 `localhost`). Every Vercel/Cloudflare/GitHub Pages deployment gives you HTTPS. Note that Vercel's
@@ -46,8 +46,8 @@ npm run dev       # http://localhost:4321
 ```bash
 npm run build      # astro check + static build to dist/
 npm run preview    # serve the build on http://127.0.0.1:4173
-npm test           # 40 unit + integration tests (vitest)
-npm run e2e        # 9 browser tests (needs `npm run e2e:install` once)
+npm test           # 60 unit + integration tests (vitest)
+npm run e2e        # 18 browser tests (needs `npm run e2e:install` once)
 npm run typecheck
 ```
 
@@ -88,9 +88,9 @@ Two design decisions worth knowing:
 
 ## Verification
 
-Run on 26 October 2026 on Windows with Node 22.
+Latest audit: 29 October 2026 on Windows with Node 22. See the production checklist for deployment and legal review limits.
 
-- **40 unit + integration tests pass** (`npm test`): classifier fixtures, invariance to position,
+- **60 unit + integration tests pass** (`npm test`): classifier fixtures, invariance to position,
   size, rotation and left/right hand; every static letter committing through the whole pipeline;
   smoothing, hold, cooldown, gesture safety, J/Z tracing, stage copy; settings sanitising;
   and the React page driven with a synthetic 30 fps clock.
@@ -99,7 +99,7 @@ Run on 26 October 2026 on Windows with Node 22.
   device) camera stream**, alphabet page, settings persistence across reload, phone-width
   stacking, dark mode, and the shell geometry itself (64px canvas nav, off-white bands,
   editorial serif hero, ink-pill CTA).
-- **25 of 25 still letters commit** at default settings from synthetic fixtures (J and Z are
+- **24 of 24 still letters commit** at default settings from synthetic fixtures (J and Z are
   motion, see above). This is a wiring test, not an accuracy claim: the fixtures come from our
   own forward-kinematics model.
 
@@ -125,8 +125,7 @@ commits".
 - **Lighting and occlusion are not mitigated.** A backlit hand, or one whose fingers overlap the
   palm from the camera's point of view, reads as different finger states. "What I see" shows the
   raw read so this is visible rather than mysterious.
-- **No recording or history export.** Committed text is in memory only; nothing is stored except
-  the calibration settings (localStorage, this device only).
+- **Optional local sample export.** Recognition points and observed results can be downloaded for debugging; no video is saved or uploaded. Transcript/history remain in memory. Theme and calibration preferences persist in localStorage.
 
 ## Next step for accuracy
 

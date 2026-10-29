@@ -17,9 +17,12 @@ import TranslateApp from '../ui/TranslateApp';
         Hold an ASL letter in front of the camera and it is added to the text — with every stage
         explained, so you can see what it can and cannot read.
       </p>
+      <div class="hero-actions"><a class="btn btn-primary" href="#translator">Try the translator</a><a class="btn btn-ghost" href="/alphabet/">Explore the alphabet</a></div>
     </div>
   </section>
 
+  <div id="translator" class="translator-anchor">
+  <noscript><p class="tile-inner">Camera recognition requires JavaScript. You can still <a href="/alphabet/">browse the alphabet</a> or read the <a href="/privacy/">privacy policy</a>.</p></noscript>
   <TranslateApp client:only="react">
     <div slot="fallback" class="tile tile-dark">
       <div class="tile-inner">
@@ -27,4 +30,14 @@ import TranslateApp from '../ui/TranslateApp';
       </div>
     </div>
   </TranslateApp>
+  </div>
+  <section class="tile tile-white" id="faq"><div class="tile-inner legal-prose">
+    <h2 class="display-md">Common questions</h2>
+    <details><summary>Does my camera video leave my device?</summary><p>Recognition runs in your browser. The app does not upload camera frames or translated text. An optional recognition-sample download saves tracking points locally. See the <a href="/privacy/">privacy policy</a>.</p></details>
+    <details><summary>Can I try it without a camera?</summary><p>Yes. Choose “Try the demo” in the <a href="#translator">translator controls</a> to replay a synthetic hand spelling HELLO without camera permission.</p></details>
+    <details><summary>Does this translate complete ASL?</summary><p>No. It attempts individual alphabet letters, one hand at a time. It does not understand ASL grammar, words or conversation, and does not replace a qualified interpreter.</p></details>
+    <details><summary>Why does it misread a letter or wait before adding it?</summary><p>Lighting, overlapping fingers and signer variation affect tracking. Hold the whole hand in view and check the candidate readout. Adjust hold time and thresholds in <a href="/settings/">Settings</a>. A recognition-sample download can help reproduce a mistake; accuracy is not guaranteed.</p></details>
+    <details><summary>How do J and Z work?</summary><p>They require motion. J starts with an extended pinky and a downward hook; Z is traced with the index finger. Inspect both movements in the <a href="/alphabet/">alphabet preview</a>.</p></details>
+    <details><summary>Why won't the camera start?</summary><p>Use HTTPS, or localhost for development. Allow camera permission and close other apps using the camera. You can still use the demo if your browser or camera is unsupported.</p></details>
+  </div></section>
 </Base>

@@ -8,7 +8,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { CONFIG_LIMITS, DEFAULT_CONFIG, type PipelineConfig } from '../pipeline/config';
-import { clearConfig, loadConfig, saveConfig } from './settings';
+import { clearConfig, loadConfig, saveConfig, sanitizeConfig } from './settings';
 
 interface SliderSpec {
   key: keyof typeof CONFIG_LIMITS;
@@ -56,7 +56,7 @@ export function SettingsApp() {
 
   const update = useCallback((patch: Partial<PipelineConfig>) => {
     setConfig((previous) => {
-      const next = { ...previous, ...patch };
+      const next = { ...previous, ...sanitizeConfig(patch) };
       saveConfig(next);
       return next;
     });
@@ -107,9 +107,11 @@ export function SettingsApp() {
                   max={limit.max}
                   step={limit.step}
                   value={value}
+                  aria-describedby={`${inputId}-help`}
+                  aria-valuetext={slider.format(value)}
                   onChange={(event) => update({ [slider.key]: Number(event.target.value) })}
                 />
-                <p className="setting-help">{slider.help}</p>
+                <p className="setting-help" id={`${inputId}-help`}>{slider.help}</p>
               </div>
             );
           })}
@@ -117,7 +119,7 @@ export function SettingsApp() {
           <div className="setting">
             <div className="switch-row">
               <div>
-                <div className="setting-label">Thumb gestures</div>
+                <label className="setting-label" htmlFor="setting-gestures">Thumb gestures</label>
                 <p className="setting-help">
                   A thumbs-up adds a space and a thumbs-down deletes a letter. They only fire when
                   no letter fits the hand, so signing A still works.
@@ -126,6 +128,7 @@ export function SettingsApp() {
               <span className="switch">
                 <input
                   type="checkbox"
+                  id="setting-gestures"
                   checked={config.gesturesEnabled}
                   aria-label="Thumb gestures"
                   onChange={(event) => update({ gesturesEnabled: event.target.checked })}
