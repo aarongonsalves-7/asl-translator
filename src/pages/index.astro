@@ -1,43 +1,36 @@
----
+﻿---
 import Base from '../layouts/Base.astro';
 import TranslateApp from '../ui/TranslateApp';
+import { MotionIcon } from '../ui/MotionIcon';
 ---
-
-<Base
-  title="ASL Translator — fingerspelling from your camera"
-  description="Spell ASL letters to your webcam and read them back as text. Runs on-device, explains every stage, and needs no account."
-  path="/"
-  section="Translate"
->
-  <section class="tile tile-white tile-hero">
+<Base title="ASL Translator — fingerspelling from your camera" description="Spell ASL letters to your webcam and read them back as text. Runs on-device, explains every stage, and needs no account." path="/" section="Translate">
+  <section class="tile tile-hero home-intro">
     <div class="tile-inner">
-      <p class="hero-kicker"><span class="badge-pill">On-device</span>Now reading A–Z fingerspelling in the browser</p>
-      <h1 class="hero-display">Spell it with your hand.</h1>
-      <p class="lead">
-        Hold an ASL letter in front of the camera and it is added to the text — with every stage
-        explained, so you can see what it can and cannot read.
-      </p>
-      <div class="hero-actions"><a class="btn btn-primary" href="#translator">Try the translator</a><a class="btn btn-ghost" href="/alphabet/">Explore the alphabet</a></div>
+      <div><h1 class="hero-display">Make room for your next letter.</h1><p class="lead">Practice ASL fingerspelling, one handshape at a time.</p></div>
+      <div class="intro-aside"><span class="privacy-label"><svg viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M10 2 3 5v6c0 5 7 9 7 9s7-4 7-9V5Z"/><path d="m6 10 3 3 5-5"/></svg>On your device. No account. No uploads.</span><a class="text-link" href="/alphabet/">Explore the alphabet <MotionIcon name="arrow" /></a></div>
     </div>
   </section>
-
   <div id="translator" class="translator-anchor">
-  <noscript><p class="tile-inner">Camera recognition requires JavaScript. You can still <a href="/alphabet/">browse the alphabet</a> or read the <a href="/privacy/">privacy policy</a>.</p></noscript>
-  <TranslateApp client:only="react">
-    <div slot="fallback" class="tile tile-dark">
-      <div class="tile-inner">
-        <p class="output-empty">Starting the translator…</p>
-      </div>
-    </div>
-  </TranslateApp>
+    <noscript><p class="tile-inner">Camera recognition requires JavaScript. You can still <a href="/alphabet/">browse the alphabet</a> or read the <a href="/privacy/">privacy policy</a>.</p></noscript>
+    <TranslateApp client:only="react"><div slot="fallback" class="tile practice-section"><div class="tile-inner"><p class="output-empty">Starting the translator…</p></div></div></TranslateApp>
   </div>
-  <section class="tile tile-white" id="faq"><div class="tile-inner legal-prose">
-    <h2 class="display-md">Common questions</h2>
-    <details><summary>Does my camera video leave my device?</summary><p>Recognition runs in your browser. The app does not upload camera frames or translated text. An optional recognition-sample download saves tracking points locally. See the <a href="/privacy/">privacy policy</a>.</p></details>
-    <details><summary>Can I try it without a camera?</summary><p>Yes. Choose “Try the demo” in the <a href="#translator">translator controls</a> to replay a synthetic hand spelling HELLO without camera permission.</p></details>
-    <details><summary>Does this translate complete ASL?</summary><p>No. It attempts individual alphabet letters, one hand at a time. It does not understand ASL grammar, words or conversation, and does not replace a qualified interpreter.</p></details>
-    <details><summary>Why does it misread a letter or wait before adding it?</summary><p>Lighting, overlapping fingers and signer variation affect tracking. Hold the whole hand in view and check the candidate readout. Adjust hold time and thresholds in <a href="/settings/">Settings</a>. A recognition-sample download can help reproduce a mistake; accuracy is not guaranteed.</p></details>
-    <details><summary>How do J and Z work?</summary><p>They require motion. J starts with an extended pinky and a downward hook; Z is traced with the index finger. Inspect both movements in the <a href="/alphabet/">alphabet preview</a>.</p></details>
-    <details><summary>Why won't the camera start?</summary><p>Use HTTPS, or localhost for development. Allow camera permission and close other apps using the camera. You can still use the demo if your browser or camera is unsupported.</p></details>
+  <section class="tile tile-parchment learning-invite" aria-labelledby="how-heading"><div class="tile-inner">
+    <div><h2 id="how-heading">New hands.<br />New possibilities.</h2><p class="prose">Start with a letter you know, or find one in the alphabet. There is room to take your time.</p><a class="text-link" href="/alphabet/">Get to know the alphabet <MotionIcon name="arrow" /></a></div>
+    <ol class="practice-steps">
+      <li><div><h3>Make room for your hand.</h3><p>Find good light and keep your whole hand in view. Start the camera when you’re ready.</p></div></li>
+      <li><div><h3>Find your letter.</h3><p>Form a handshape and hold it steady. The live guidance explains what the camera can see.</p></div></li>
+      <li><div><h3>Watch it become text.</h3><p>Release between letters. Add a space, undo a letter, or copy your text when you’re done.</p></div></li>
+    </ol>
+  </div></section>
+  <section class="tile" id="faq"><div class="tile-inner faq-layout">
+    <div><h2 class="display-md">A few things<br />you might wonder.</h2><p>Know what to expect before you begin.</p></div>
+    <div class="faq-list">
+      <details><summary>Does my camera video leave my device?</summary><p>Recognition runs in your browser. The app does not upload camera frames or translated text. An optional recognition-sample download saves tracking points locally. See the <a href="/privacy/">privacy policy</a>.</p></details>
+      <details><summary>Can I try it without a camera?</summary><p>Yes. Choose “Try the demo” in the <a href="#translator">translator controls</a> to replay a synthetic hand spelling HELLO without camera permission.</p></details>
+      <details><summary>Does this translate complete ASL?</summary><p>No. It attempts individual alphabet letters, one hand at a time. It does not understand ASL grammar, words or conversation, and does not replace a qualified interpreter.</p></details>
+      <details><summary>Why does it misread a letter or wait before adding it?</summary><p>Lighting, overlapping fingers and signer variation affect tracking. Hold the whole hand in view and check the candidate readout. Adjust hold time and thresholds in <a href="/settings/">Settings</a>. A recognition-sample download can help reproduce a mistake; accuracy is not guaranteed.</p></details>
+      <details><summary>How do J and Z work?</summary><p>They require motion. J starts with an extended pinky and a downward hook; Z is traced with the index finger. Inspect both movements in the <a href="/alphabet/">alphabet preview</a>.</p></details>
+      <details><summary>Why won't the camera start?</summary><p>Use HTTPS, or localhost for development. Allow camera permission and close other apps using the camera. You can still use the demo if your browser or camera is unsupported.</p></details>
+    </div>
   </div></section>
 </Base>

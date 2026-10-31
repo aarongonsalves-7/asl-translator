@@ -50,25 +50,26 @@ test('the translate page stacks on a phone viewport', async ({ page }) => {
 test('dark mode is honoured and can be overridden', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
-  // The light canvas is off-white (#f5f5f5); the dark canvas is the brand's near-black ink.
+  // Theme preference switches the whole neutral surface system.
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe('rgb(12, 10, 9)');
+  expect(bg).toBe('rgb(16, 31, 27)');
 
   await page.getByRole('button', { name: /switch to light theme/i }).click();
   const light = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(light).toBe('rgb(245, 245, 245)');
+  expect(light).toBe('rgb(240, 246, 242)');
 });
 
-test('the shell keeps the ElevenLabs chassis: canvas nav, hairline bands, editorial display', async ({
+test('the practice workspace is immediately reachable and the shell stays consistent', async ({
   page,
 }) => {
   await page.goto('/');
 
   const nav = page.locator('.global-nav');
   const navBox = await nav.boundingBox();
-  expect(navBox!.height).toBe(64);
-  // The nav sits on the same off-white canvas as the page, not on a black bar.
-  expect(await nav.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(245, 245, 245)');
+  expect(navBox!.height).toBe(76);
+  await expect(page.getByRole('button', { name: 'Turn on camera', exact: true })).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Try the demo', exact: true })).toBeInViewport();
+  await expect(page.getByRole('list', { name: 'Current recognition steps' })).toBeVisible();
 
   // Bands are full-bleed (no radius, edge to edge) with editorial air inside.
   const tiles = await page.locator('main .tile').evaluateAll((nodes) =>
@@ -86,9 +87,9 @@ test('the shell keeps the ElevenLabs chassis: canvas nav, hairline bands, editor
     expect(tile.radius).toBe('0px');
     expect(tile.width).toBe(page.viewportSize()!.width);
   }
-  expect(tiles[0]!.pad).toBeGreaterThanOrEqual(64);
+  expect(tiles[0]!.pad).toBeGreaterThanOrEqual(24);
 
-  // Display is the editorial serif at its light weight, not a bold sans headline.
+  // The bundled UI face keeps the interface independent of third-party font requests.
   const hero = await page.locator('.hero-display').evaluate((el) => {
     const style = getComputedStyle(el);
     return {
@@ -98,11 +99,10 @@ test('the shell keeps the ElevenLabs chassis: canvas nav, hairline bands, editor
     };
   });
   expect(hero.size).toBeGreaterThanOrEqual(40);
-  expect(hero.weight).toBe('400');
-  expect(hero.family).toContain('EB Garamond');
+  expect(hero.weight).toBe('600');
+  expect(hero.family).toContain('InterVar');
 
-  // On a light surface the primary CTA is the near-black ink pill (#292524), never a
-  // saturated accent. (On the dark product band the same pill inverts to white for contrast.)
+  // Teal consistently identifies the primary action.
   await page.goto('/settings/');
   await waitForHydration(page);
   await expect
@@ -111,7 +111,7 @@ test('the shell keeps the ElevenLabs chassis: canvas nav, hairline bands, editor
         .locator('.settings-actions .btn-primary')
         .evaluate((el) => getComputedStyle(el).backgroundColor),
     )
-    .toBe('rgb(41, 37, 36)');
+    .toBe('rgb(7, 94, 88)');
 });
 
 test('the mobile menu opens from the hamburger and closes again', async ({ page }) => {

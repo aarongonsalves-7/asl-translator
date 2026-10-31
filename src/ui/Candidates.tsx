@@ -39,7 +39,7 @@ export function Candidates({ state }: CandidatesProps) {
             >
               <span className="candidate-letter">{candidate.letter}</span>
               <span className="candidate-bar">
-                <span style={{ width: pct(candidate.confidence) }} />
+                <span style={{ transform: `scaleX(${candidate.confidence})` }} />
               </span>
               <span className="candidate-score">{pct(candidate.confidence)}</span>
             </div>
@@ -53,7 +53,7 @@ export function Candidates({ state }: CandidatesProps) {
             <div className="why-row" key={constraint.label}>
               <span>{constraint.label}</span>
               <span className="why-bar" aria-hidden="true">
-                <span style={{ width: pct(constraint.value) }} />
+                <span style={{ transform: `scaleX(${constraint.value})` }} />
               </span>
               <span className="why-value">{pct(constraint.value)}</span>
             </div>

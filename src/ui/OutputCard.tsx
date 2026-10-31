@@ -5,8 +5,10 @@
  * you relaxed is indistinguishable from a bug. Naming what was added, how confident it was and
  * how long it was held makes every commit traceable, including the ones you did not intend.
  */
+import { useState } from 'react';
 import type { RecognitionState } from '../pipeline/engine';
 import type { EditAction } from './useRecognition';
+import { MotionIcon } from './MotionIcon';
 
 const pct = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -17,12 +19,17 @@ export interface OutputCardProps {
 
 export function OutputCard({ state, onEdit }: OutputCardProps) {
   const { text, receipt, history } = state;
+  const [copyStatus, setCopyStatus] = useState('');
+  const copyText = async () => {
+    try { await navigator.clipboard.writeText(text); setCopyStatus('Copied to clipboard.'); }
+    catch { setCopyStatus('Could not copy. Select the text and copy it manually.'); }
+  };
   const letters = history.filter((entry) => entry.kind === 'letter').length;
 
   return (
     <section className="transcript" aria-label="Translated text" data-testid="output">
       <div className="transcript-head">
-        <span className="transcript-label">Text</span>
+        <h2 className="transcript-label">Your text</h2>
         <span className="transcript-meta">
           {history.length} commit{history.length === 1 ? '' : 's'} · {letters} letter
           {letters === 1 ? '' : 's'}
@@ -31,7 +38,7 @@ export function OutputCard({ state, onEdit }: OutputCardProps) {
 
       {receipt ? (
         <div className="receipt" data-testid="receipt">
-          <span aria-hidden="true">{receipt.kind === 'backspace' ? '⌫' : receipt.kind === 'space' ? '␣' : '✓'}</span>
+          <MotionIcon name={receipt.kind === 'backspace' ? 'backspace' : receipt.kind === 'space' ? 'space' : 'check'} />
           <span>
             Added <strong>{receipt.kind === 'letter' ? receipt.value : receipt.kind}</strong>
             {receipt.kind === 'letter'
@@ -49,20 +56,22 @@ export function OutputCard({ state, onEdit }: OutputCardProps) {
           </>
         ) : (
           <span className="output-empty">
-            Nothing yet. Open your hand to the camera, form a letter and hold it for a moment.
+            <strong>Your first letter starts here.</strong>
+            <small>Open your hand to the camera, form a letter and hold it for a moment.</small>
           </span>
         )}
       </p>
 
       <div className="output-controls">
+        <button type="button" className="btn-link" onClick={copyText} disabled={!text}><MotionIcon name={copyStatus === 'Copied to clipboard.' ? 'check' : 'copy'} />Copy text</button>
         <button type="button" className="btn btn-primary" onClick={() => onEdit('space')}>
-          Space
+          <MotionIcon name="space" />Space
         </button>
         <button type="button" className="btn-link" onClick={() => onEdit('backspace')}>
-          Backspace
+          <MotionIcon name="backspace" />Backspace
         </button>
         <button type="button" className="btn-link" onClick={() => onEdit('undo')} disabled={history.length === 0}>
-          Undo
+          <MotionIcon name="undo" />Undo
         </button>
         <button
           type="button"
@@ -70,7 +79,7 @@ export function OutputCard({ state, onEdit }: OutputCardProps) {
           onClick={() => onEdit('clear')}
           disabled={text.length === 0 && history.length === 0}
         >
-          Clear
+          <MotionIcon name="clear" />Clear
         </button>
       </div>
 
@@ -79,6 +88,7 @@ export function OutputCard({ state, onEdit }: OutputCardProps) {
         <span>·</span>
         <span>Keyboard: Space, Backspace, Esc</span>
       </p>
+      <p className="output-meta" role="status">{copyStatus}</p>
     </section>
   );
 }

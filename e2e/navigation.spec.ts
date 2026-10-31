@@ -1,5 +1,5 @@
 ﻿import { expect, test } from '@playwright/test';
-test('icon navigation retains names, active states and keyboard focus on every page',async({page})=> {
+test('labeled navigation retains names, active states and keyboard focus on every page',async({page})=> {
   for(const [url,label] of [['/','Translate'],['/alphabet/','Alphabet'],['/settings/','Settings']]) {
     await page.goto(url!);
     for(const name of ['Main','Bottom']) {
@@ -7,7 +7,7 @@ test('icon navigation retains names, active states and keyboard focus on every p
       for(const item of ['Translate','Alphabet','Settings']) {
         const link=nav.getByRole('link',{name:item,exact:true});
         await expect(link.locator('svg')).toHaveCount(1);
-        await expect(link).toHaveText('');
+        await expect(link).toHaveText(item);
         if(item===label) {
           await expect(link).toHaveAttribute('aria-current','page');
           await expect(link).not.toHaveCSS('box-shadow','none');

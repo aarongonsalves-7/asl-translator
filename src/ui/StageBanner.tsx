@@ -47,7 +47,7 @@ export function StageBanner({ state }: StageBannerProps) {
           aria-valuenow={Math.round(progress * 100)}
           aria-label={stage.id === 'cooldown' ? 'Cooldown' : 'Hold progress'}
         >
-          <span style={{ width: `${Math.round(progress * 100)}%` }} />
+          <span style={{ transform: `scaleX(${progress})` }} />
         </div>
       ) : null}
     </section>

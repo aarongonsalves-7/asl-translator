@@ -1,10 +1,4 @@
-/**
- * The Translate page body: two full-bleed tiles.
- *
- * The dark tile is the product — camera edge-to-edge with no frame, the stage banner beneath it,
- * and the transcript beside it. The white tile below is the explanation. Splitting them this way
- * follows the design spec's rule that the surface change, not a border, is the section divider.
- */
+/** Practice workspace and the evidence behind each recognition result. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LETTER_ORDER } from '../classify/letters';
 import type { HandFrame } from '../vision/landmarks';
@@ -15,6 +9,7 @@ import { Candidates } from './Candidates';
 import { HandReadout } from './HandReadout';
 import { OutputCard } from './OutputCard';
 import { drawHand } from '../vision/overlay';
+import { MotionIcon } from './MotionIcon';
 
 const DEMO_WORD = 'HELLO';
 
@@ -73,8 +68,7 @@ export function TranslateApp() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+      if (target?.closest('input, textarea, select, button, a, summary, [role="button"]') || target?.isContentEditable) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       if (event.key === 'Backspace') {
@@ -105,17 +99,24 @@ export function TranslateApp() {
         : 0;
 
   const showProgress = state.stage.id === 'holding' || state.stage.id === 'tracing';
+  // This path follows the current recognition attempt, never a saved learning score.
+  const pathStep = mode === 'off' || mode === 'starting' ? 0
+    : ['added', 'latched', 'cooldown'].includes(state.stage.id) ? 3
+    : ['holding', 'tracing'].includes(state.stage.id) ? 2
+    : state.handPresent ? 1 : 0;
+  const pathLabels = ['Find your hand', 'Read the shape', 'Hold a letter', 'Add to text'];
 
   return (
     <>
-      <section className="tile tile-dark" aria-label="Translator">
+      <section className="tile practice-section" aria-label="Translator">
         <div className="tile-inner">
           <div className="translate">
             <div className="translate-main">
               <div
                 className={`viewport${mode === 'live' ? ' viewport-mirrored' : ''}`}
+                data-mode={mode}
                 ref={boxRef}
-                style={{ aspectRatio: String(aspect) }}
+                style={{ aspectRatio: mode === 'off' || mode === 'starting' ? '16 / 9' : String(aspect) }}
               >
                 <video ref={videoRef} className="viewport-video" playsInline muted aria-label="Camera preview" />
                 <canvas ref={canvasRef} className="viewport-canvas" aria-hidden="true" />
@@ -130,26 +131,25 @@ export function TranslateApp() {
                     <span className="tag-dot" style={{ background: '#ffd60a' }} aria-hidden="true" />
                     Demo · spelling {DEMO_WORD}
                   </span>
-                ) : null}
+                ) : <span className="viewport-tag"><span className="tag-dot" aria-hidden="true" />{mode === 'starting' ? 'Starting camera' : 'Camera off'}</span>}
 
-                {mode !== 'live' ? (
+                {mode !== 'live' && mode !== 'demo' ? (
                   <div className="viewport-idle">
-                    <span className="idle-glyph" aria-hidden="true">
-                      ✋
-                    </span>
+                    <svg className="idle-glyph" viewBox="0 0 80 80" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 13H13v16M58 13h9v16M22 67H13V51M58 67h9V51"/><circle cx="40" cy="40" r="15"/><path d="M33 40h14M40 33v14"/></svg>
+                    <h3>{loading ? 'Getting ready.' : error ? 'Let’s try that again.' : 'Ready when you are.'}</h3>
                     <p>
                       {loading
                         ? `Loading the hand tracker — ${Math.round((loading.progress ?? 0) * 100)}%`
                         : error
                           ? error.message
-                          : 'Camera is off. Turn it on to translate your hand, or watch the demo first — it needs no camera at all.'}
+                          : 'Your camera stays off until you turn it on. Or try a demo — no camera needed.'}
                     </p>
                   </div>
                 ) : null}
 
                 {showProgress ? (
                   <div className="viewport-progress">
-                    <span style={{ width: `${Math.round(progress * 100)}%` }} />
+                    <span style={{ transform: `scaleX(${progress})` }} />
                   </div>
                 ) : null}
               </div>
@@ -157,6 +157,7 @@ export function TranslateApp() {
               <div className="app-controls">
                 {mode === 'live' || mode === 'demo' ? (
                   <button type="button" className="btn btn-ghost" onClick={api.stop}>
+                    <MotionIcon name="stop" />
                     Stop {mode === 'demo' ? 'demo' : 'camera'}
                   </button>
                 ) : (
@@ -167,9 +168,11 @@ export function TranslateApp() {
                       onClick={startCamera}
                       disabled={mode === 'starting'}
                     >
+                      <MotionIcon name="camera" />
                       {mode === 'starting' ? 'Starting…' : error ? 'Try camera again' : 'Turn on camera'}
                     </button>
                     <button type="button" className="btn btn-ghost" onClick={() => void api.startDemo(DEMO_WORD)}>
+                      <MotionIcon name="play" />
                       Try the demo
                     </button>
                   </>
@@ -184,13 +187,19 @@ export function TranslateApp() {
               <OutputCard state={state} onEdit={api.edit} />
             </aside>
           </div>
+          <ol className="recognition-path" aria-label="Current recognition steps">
+            {pathLabels.map((label, index) => <li key={label} data-state={index < pathStep ? 'done' : index === pathStep ? 'current' : 'pending'} aria-current={index === pathStep ? 'step' : undefined}>
+              <span className="path-mark" aria-hidden="true">{index < pathStep ? <MotionIcon name="check" /> : index + 1}</span>
+              <span>{label}</span>
+            </li>)}
+          </ol>
         </div>
       </section>
 
-      <section className="tile tile-white">
+      <section className="tile recognition-details">
         <div className="tile-inner">
           <div className="section-head">
-            <h2 className="display-md">Why it reads what it reads.</h2>
+            <h2 className="display-md">Understand each attempt.</h2>
             <p className="section-note">
               The runner-up, the failing rules, and the raw hand — every frame.
             </p>

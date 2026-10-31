@@ -18,7 +18,10 @@ test('unique metadata, local links, accessibility landmarks and crawl files',asy
   }
   expect(titles.size).toBe(paths.length);expect(descriptions.size).toBe(paths.length);expect(descriptions.has('')).toBe(false);
   for(const link of links) {
-    const response=await page.goto(link);expect(response?.status(),link).toBe(200);
+    const response=await page.goto(link);
+    // A same-document fragment navigation has no HTTP response; verify the document separately.
+    expect(response?.status() ?? (await request.get(new URL(link, 'http://127.0.0.1:4173').pathname)).status(),link).toBe(200);
+    await page.waitForFunction(()=>[...document.querySelectorAll('astro-island')].every(el=>!el.hasAttribute('ssr')));
     const hash=new URL(page.url()).hash;
     if(hash) expect(await page.locator('[id]').evaluateAll((els,id)=>els.some(el=>el.id===id),decodeURIComponent(hash.slice(1))),link).toBe(true);
   }
@@ -26,7 +29,8 @@ test('unique metadata, local links, accessibility landmarks and crawl files',asy
   const sitemap=await request.get('/sitemap.xml');expect(sitemap.ok()).toBe(true);expect(await sitemap.text()).toContain('<urlset');
   expect((await request.get('/social-preview.png')).ok()).toBe(true);
   expect((await request.get('/favicon.svg')).ok()).toBe(true);
-  const missing=await page.goto('/this-page-does-not-exist');expect(missing?.status()).toBe(404);
+  // Match the configured trailing-slash URL convention to reach the site's custom 404.
+  const missing=await page.goto('/this-page-does-not-exist/');expect(missing?.status()).toBe(404);
   await expect(page.getByRole('heading',{name:"That page isn't here."})).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content','noindex, follow');
 });
@@ -41,7 +45,7 @@ test('mobile CTA, pages and FAQ stay usable without overflow',async({page})=> {
     if(path==='/privacy/') await page.screenshot({path:'test-results/privacy-mobile.png',fullPage:true});
   }
   await page.goto('/');
-  await expect(page.getByRole('link',{name:'Try the translator',exact:true})).toBeInViewport();
+  await expect(page.getByRole('button',{name:'Turn on camera',exact:true})).toBeInViewport();
   await page.getByText('Does my camera video leave my device?',{exact:true}).click();
   await expect(page.locator('#faq details').first()).toHaveAttribute('open','');
   await page.locator('.mobile-cta').click();await expect(page).toHaveURL(/#translator$/);

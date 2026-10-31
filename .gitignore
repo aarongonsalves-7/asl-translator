@@ -29,3 +29,10 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+
+# Local design review captures, decision sessions, and developer preferences
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/questions/
+.impeccable/review/
+.agents/skills/impeccable/scripts/bin/

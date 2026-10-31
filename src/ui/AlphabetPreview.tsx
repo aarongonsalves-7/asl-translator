@@ -18,11 +18,11 @@ export default function AlphabetPreview() {
     return () => window.clearInterval(timer);
   }, [playing]);
   return <div>
-    <p>Procedural landmark preview, viewed face-to-face (not a mirror). Blue points mark fingertips. Rotate to inspect depth; these are approximate poses awaiting signer review.</p>
+    <p>Procedural landmark preview, viewed face-to-face (not a mirror). Larger points mark fingertips. Rotate to inspect depth; these are approximate poses awaiting signer review.</p>
     <div className="alphabet-controls">
       <label>Signing hand <select value={hand} onChange={e => setHand(e.target.value as 'left' | 'right')}><option value="right">Right</option><option value="left">Left</option></select></label>
       <label>Inspection angle <input type="range" min="-80" max="80" value={yaw} onChange={e => setYaw(Number(e.target.value))} /> {yaw}°</label>
-      <button type="button" onClick={() => setPlaying(p => !p)}>{playing ? 'Pause movement' : 'Play J and Z'}</button>
+      <button className="btn btn-primary" type="button" aria-pressed={playing} onClick={() => setPlaying(p => !p)}>{playing ? 'Pause movement' : 'Play J and Z'}</button>
       <label>Motion frame <input type="range" min="0" max="64" value={phase} onChange={e => { setPlaying(false); setPhase(Number(e.target.value)); }} /></label>
     </div>
     <div className="alphabet-grid">{LETTER_LIST.map((rule, index) => {
@@ -31,10 +31,10 @@ export default function AlphabetPreview() {
       const points = frame.landmarks;
       const edges = [...HAND_CONNECTIONS].sort(([a,b],[c,d]) => (points[a]!.z + points[b]!.z) - (points[c]!.z + points[d]!.z));
       return <article className="letter-card" key={rule.letter} id={`letter-${rule.letter}`}>
-        <h3>{rule.letter}{motion ? ' · motion' : ''}</h3>
+        <h3>{rule.letter}{motion ? <span className="letter-motion">Motion</span> : null}</h3>
         <svg viewBox="0 0 240 240" role="img" aria-label={`${rule.letter}, ${hand} hand landmark preview`} style={{ width: '100%', maxHeight: 260 }}>
           {edges.map(([a,b]) => <line key={`${a}-${b}`} x1={points[a]!.x*240} y1={points[a]!.y*240} x2={points[b]!.x*240} y2={points[b]!.y*240} stroke="currentColor" strokeWidth="4" strokeLinecap="round" />)}
-          {points.map((p,i) => <circle key={i} cx={p.x*240} cy={p.y*240} r={i > 0 && i % 4 === 0 ? 4 : 2.5} fill={i > 0 && i % 4 === 0 ? '#1670c5' : 'currentColor'} />)}
+          {points.map((p,i) => <circle key={i} className={i > 0 && i % 4 === 0 ? 'landmark-tip' : undefined} cx={p.x*240} cy={p.y*240} r={i > 0 && i % 4 === 0 ? 4 : 2.5} fill="currentColor" />)}
         </svg>
         <p>{rule.tip}</p>
       </article>;

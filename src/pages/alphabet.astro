@@ -17,11 +17,12 @@ const motionLetters = letters.filter((rule) => rule.motion).map((rule) => rule.l
 >
   <section class="tile tile-white tile-hero">
     <div class="tile-inner">
-      <h1 class="display-lg">The 26 handshapes.</h1>
+      <h1 class="display-lg">Get to know the alphabet.</h1>
       <p class="lead lead-wide">
         These are the exact descriptions the recogniser scores against — including the two letters
         that only exist in motion.
       </p>
+      <nav class="alphabet-index" aria-label="Jump to a letter">{letters.map(rule => <a href={`#letter-${rule.letter}`}>{rule.letter}</a>)}</nav>
     </div>
   </section>
 

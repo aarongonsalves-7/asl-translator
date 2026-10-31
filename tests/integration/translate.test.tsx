@@ -60,7 +60,7 @@ describe('Translate page', () => {
     render(<TranslateApp />);
 
     expect(screen.getByTestId('stage-headline')).toHaveTextContent('Camera off');
-    expect(screen.getByTestId('output-text')).toHaveTextContent('Nothing yet');
+    expect(screen.getByTestId('output-text')).toHaveTextContent('Your first letter starts here.');
     expect(screen.getByRole('button', { name: 'Turn on camera' })).toBeEnabled();
   });
 

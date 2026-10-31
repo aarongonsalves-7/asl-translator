@@ -52,8 +52,6 @@ const nav = [
     <meta name="twitter:image:alt" content="ASL Translator — on-device fingerspelling" />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preload" href="/fonts/eb-garamond-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
     <script is:inline>
       // Resolve the effective theme before first paint so a dark-mode user never sees a white
       // flash, and so the sun/moon icon has a theme to key off without waiting for JS at the
@@ -72,11 +70,9 @@ const nav = [
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-    <!-- Top nav: 64px canvas bar, quiet menu, icon theme control. Below 640px the menu
-         collapses into the hamburger panel. -->
     <nav class="global-nav" aria-label="Main">
       <div class="global-nav-inner">
-        <a class="global-nav-brand" href="/">ASL Translator</a>
+        <a class="global-nav-brand" href="/"><svg class="brand-mark" viewBox="0 0 32 36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 8v20M11 4v28M17 9v19M23 3v29M29 12v13" /></svg>ASL Translator</a>
         <div class="global-nav-links" id="nav-menu">
           {
             nav.map((item) => (
@@ -88,6 +84,7 @@ const nav = [
                 aria-current={path === item.href ? 'page' : undefined}
               >
                 <NavIcon name={item.label} />
+                <span>{item.label}</span>
               </a>
             ))
           }
@@ -158,12 +155,12 @@ const nav = [
 
     <footer class="site-footer">
       <div class="tile-inner">
-        <p class="fine-print">
+        <div><span class="footer-brand">A little practice goes a long way.</span><p class="fine-print">
           Alphabet recognition only. It is a learning and accessibility aid, not a substitute for a
           qualified ASL interpreter. The camera stream and every landmark stay on this device.
-        </p>
+        </p></div>
         <nav class="footer-links" aria-label="Bottom">
-          {nav.map(item => <a class="global-nav-link" href={item.href} aria-label={item.label} title={item.label} aria-current={path === item.href ? 'page' : undefined}><NavIcon name={item.label} /></a>)}
+          {nav.map(item => <a class="global-nav-link" href={item.href} aria-label={item.label} title={item.label} aria-current={path === item.href ? 'page' : undefined}><NavIcon name={item.label} /><span>{item.label}</span></a>)}
         </nav>
         <nav class="legal-links" aria-label="Information"><a href="/privacy/">Privacy policy</a><a href="/terms/">Terms of use</a><a href="/#faq">FAQs</a></nav>
       </div>

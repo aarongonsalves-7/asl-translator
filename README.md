@@ -1,5 +1,7 @@
 # ASL Translator
 
+The website uses the project-local Impeccable skill and the Learning commons design system. [PRODUCT.md](PRODUCT.md) records the audience and product commitments; [DESIGN.md](DESIGN.md) records the current visual system. Run `npm run dev` to preview it.
+
 [▶ Watch the launch video](https://github.com/aarongonsalves-7/asl-translator/raw/refs/heads/main/brag-output/brag.mp4)
 Production setup and unresolved legal/hosting decisions: [deployment checklist](docs/production-readiness.md).
 
@@ -74,7 +76,7 @@ demo frame ───┴─▶ FrameSource ─▶ canonicalise ─▶ features �
 | `src/pipeline/stages.ts` | Every stage's headline, explanation and the one action that moves it forward. |
 | `src/vision/sources.ts` | `LiveSource` (camera + tracker) and `DemoSource` (synthetic frames) behind one interface. |
 | `src/ui/` | Translate page, stage banner, candidates, "what I see", output + receipts, settings. |
-| `src/styles/global.css` | The design system: tokens and page architecture taken from `DESIGN.md` — a 64px canvas nav, off-white bands, editorial serif display, ink-pill CTAs and pastel atmospheric gradient orbs. Inter and EB Garamond are self-hosted so no third-party font request is made. |
+| `src/styles/global.css` | The Learning commons design system: teal navigation, pale green surfaces, self-hosted Inter, responsive practice workspace, accessible controls, and light/dark themes. |
 | `src/sim/handModel.ts` | Forward-kinematics hand model: 26 letter shapes from joint angles. Gives deterministic fixtures and powers demo mode. |
 
 Two design decisions worth knowing:
@@ -97,8 +99,7 @@ Latest audit: 29 October 2026 on Windows with Node 22. See the production checkl
 - **9 Playwright tests pass** (`npm run e2e`) against the production build: demo spelling `HELLO`
   in a real browser, camera-denied narration, loading the **vendored model with a real (fake
   device) camera stream**, alphabet page, settings persistence across reload, phone-width
-  stacking, dark mode, and the shell geometry itself (64px canvas nav, off-white bands,
-  editorial serif hero, ink-pill CTA).
+  stacking, dark mode, and the responsive shell. Historical verification notes describe the build at the time of that audit.
 - **24 of 24 still letters commit** at default settings from synthetic fixtures (J and Z are
   motion, see above). This is a wiring test, not an accuracy claim: the fixtures come from our
   own forward-kinematics model.
