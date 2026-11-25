@@ -1,5 +1,15 @@
 # ASL Translator
 
+## What is this project?
+
+ASL Translator is a free, browser-only tool that turns American Sign Language fingerspelling into text in real time. Point your webcam at your hand, fingerspell a letter, hold it, and the letter appears as text — with an explanation whenever the app refuses to commit, instead of failing silently.
+
+It recognises the 26 fingerspelling handshapes, one hand at a time, using MediaPipe hand tracking and its own geometric rules over 40+ hand-landmark measurements. Everything runs in the browser: no account, no server, no API keys, no video uploaded anywhere. It works offline once loaded, and a demo mode replays a synthetic hand spelling HELLO so you can see the whole pipeline without a camera.
+
+It does not understand signs, words or grammar, and it is not a substitute for a qualified interpreter or for learning from a Deaf teacher.
+
+Status: built and tested locally. Not deployed yet.
+
 The website uses the project-local Impeccable skill and the Learning commons design system. [PRODUCT.md](PRODUCT.md) records the audience and product commitments; [DESIGN.md](DESIGN.md) records the current visual system. Run `npm run dev` to preview it.
 
 [▶ Watch the launch video](https://github.com/aarongonsalves-7/asl-translator/raw/refs/heads/main/brag-output/brag.mp4)
